@@ -25,7 +25,7 @@ unsigned long PixelDataSize;
 //******************************************************************************
 // Секция прототипов локальных функций
 //******************************************************************************
-void AimDrawing(HDC hCompatibleDC, UINT bmHeight, UINT bmWidth);
+void AimDrawing(HDC hCompatibleDC);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -34,7 +34,7 @@ void ImgBufferSet(unsigned char* RGB, int height, int wight, int linesize)
 	unsigned long cnt;
 	HDC dc;
 	BITMAPINFO i;
-	VOID* pvBits;
+	VOID* pvBits = NULL;
 	int line;
 	int index;
 	int PixelIndex;
@@ -72,7 +72,6 @@ void ImgBufferSet(unsigned char* RGB, int height, int wight, int linesize)
 
 	dc = CreateCompatibleDC(NULL);
 
-
 	ZeroMemory(&i.bmiHeader, sizeof(BITMAPINFOHEADER));
 	i.bmiHeader.biWidth = wight;     // Set size you need
 	i.bmiHeader.biHeight = height;    // Set size you need
@@ -109,13 +108,11 @@ void DrawImgCamera(HWND hWnd, HDC hDC)
 
 	hCompatibleDC = CreateCompatibleDC(hDC);
 	hOldBitmap = SelectObject(hCompatibleDC, hBitmap);
-	
-	
-	
+		
 	GetClientRect(hWnd, &Rect);
 	if (Bitmap.bmWidth > 0 && Bitmap.bmHeight > 0)
 	{
-		AimDrawing(hCompatibleDC, Bitmap.bmHeight, Bitmap.bmWidth);
+		AimDrawing(hCompatibleDC);
 		
 		//Расчет пользовательского окна
 		proportion = (float)Bitmap.bmWidth / (float)Bitmap.bmHeight;
@@ -145,14 +142,14 @@ void DrawImgCamera(HWND hWnd, HDC hDC)
 	DeleteDC(hCompatibleDC);
 }
 
-void AimDrawing(HDC hCompatibleDC, UINT bmHeight, UINT bmWidth)
+void AimDrawing(HDC hCompatibleDC)
 {
 	HPEN hPen; //создаём перо
 	UINT Xleft, Xright;
 	UINT Ybot;
 	int cnt;
-
 	HFONT h_font;
+
 	h_font = CreateFont(param.AimOption.TextWidthPix, param.AimOption.TextHeightPix, 0, 0,
 		FW_NORMAL, 0,
 		0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -189,5 +186,6 @@ void AimDrawing(HDC hCompatibleDC, UINT bmHeight, UINT bmWidth)
 		}
 	}
 
+	DeleteObject(h_font);
 	DeleteObject(hPen);
 }
