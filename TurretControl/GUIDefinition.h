@@ -56,6 +56,7 @@ enum {
 	EditOptionAimLineWidth,
 	EditOptionAimTextWidth,
 	EditOptionAimTextHeight,
+	ButtonOptionAimColorText,
 	CheckBoxText1,
 	EditOptionOffsetText1,
 	EditOptionLenLineText1,

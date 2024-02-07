@@ -155,11 +155,11 @@ void AimDrawing(HDC hCompatibleDC)
 		0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Arial");
 
-	SetTextColor(hCompatibleDC, RGB(0, 0, 0));
+	SetTextColor(hCompatibleDC, param.AimOption.TextColor);
 	SetBkMode(hCompatibleDC, TRANSPARENT);
 	SelectObject(hCompatibleDC, h_font);
 		
-	hPen = CreatePen(PS_SOLID, param.AimOption.LineWidthPix, RGB(0, 0, 0));
+	hPen = CreatePen(PS_SOLID, param.AimOption.LineWidthPix, param.AimOption.TextColor);
 	SelectObject(hCompatibleDC, hPen);
 
 	Xleft = param.AimOption.X - param.AimOption.width / 2;

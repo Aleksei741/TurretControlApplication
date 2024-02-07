@@ -15,6 +15,8 @@ extern UserParameters_DType param;
 static HINSTANCE hInstOption;
 static HWND hwndOptionWindow;
 static HWND hWndAimOption[10];
+static CHOOSECOLOR cc;
+static COLORREF dColors[] = { 255, 222, 222 };
 
 static BOOL flagWriteGUI;
 //******************************************************************************
@@ -46,10 +48,21 @@ int WINAPI CreateWindow_AimOption(HINSTANCE hInst, HWND parent)
 
 	MSG SoftwareMainMessege = { 0 };
 
-	hwndOptionWindow = CreateWindow(L"AimOption", L"Настройки прицела", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 300, parent, NULL, hInst, NULL);
+	hwndOptionWindow = CreateWindow(L"AimOption", L"Настройки прицела", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 480, 320, parent, NULL, hInst, NULL);
 
 	ShowWindow(hwndOptionWindow, SW_NORMAL);
 	UpdateWindow(hwndOptionWindow);
+
+	cc.Flags = CC_RGBINIT | CC_FULLOPEN;
+	cc.hInstance = NULL;
+	cc.hwndOwner = hwndOptionWindow;
+	cc.lCustData = 0L;
+	cc.lpCustColors = dColors;
+	cc.lpfnHook = NULL;
+	cc.lpTemplateName = (LPCWSTR)NULL;
+	cc.lStructSize = sizeof(cc);
+	cc.rgbResult = param.AimOption.TextColor;
+	//cc.rgbResult = RGB(0, 0, 0);
 
 	return 0;
 }
@@ -79,6 +92,12 @@ LRESULT CALLBACK AimOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM
 				break;
 			case CheckBoxText3:
 				param.AimOption.AimText[2].Active = SendMessage(hWndAimOption[AOPT_MEAS_3], BM_GETCHECK, 0, 0);
+				break;
+			case ButtonOptionAimColorText:
+				if (ChooseColor(&cc)) 
+				{
+					param.AimOption.TextColor = (COLORREF)cc.rgbResult;
+				}				
 				break;
 			case EditOptionAimX:
 				if (HIWORD(wp) == EN_UPDATE)
@@ -173,8 +192,10 @@ LRESULT CALLBACK AimOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM
 		CreateWindow(WC_EDIT, L"10", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 250, 10 + LINE_SPACE_AIM_OPTION * cnt, 60, 22, hWnd, (HMENU)EditOptionAimTextWidth, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"ширина", WS_VISIBLE | WS_CHILD, 320, 10 + LINE_SPACE_AIM_OPTION * cnt, 60, 22, hWnd, NULL, hInstOption, NULL);
 		CreateWindow(WC_EDIT, L"4", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 380, 10 + LINE_SPACE_AIM_OPTION * cnt, 60, 22, hWnd, (HMENU)EditOptionAimTextHeight, hInstOption, NULL);
-		//CreateWindow(WC_STATIC, L"pix", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_AIM_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 		cnt++;
+
+		CreateWindow(WC_STATIC, L"Цвет линий и текста", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_AIM_OPTION * cnt, 180, 40, hWnd, NULL, hInstOption, NULL);
+		hWndAimOption[AOPT_BUTTON_COLOR] = CreateWindow(WC_BUTTON, L"Выбрать", WS_CHILD | WS_VISIBLE, 350, 10 + LINE_SPACE_AIM_OPTION * cnt++, 80, 22, hWnd, (HMENU)ButtonOptionAimColorText, hInstOption, NULL);
 
 		hWndAimOption[AOPT_MEAS_1] = CreateWindow(WC_BUTTON, L"", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, 10 + LINE_SPACE_AIM_OPTION * cnt, 20, 22, hWnd, (HMENU)CheckBoxText1, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"длина линии", WS_VISIBLE | WS_CHILD, 40, 10 + LINE_SPACE_AIM_OPTION * cnt, 45, 22, hWnd, NULL, hInstOption, NULL);

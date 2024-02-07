@@ -173,6 +173,7 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	param.AimOption.LineWidthPix = Read1Param((LPWSTR)L"AimOption", (LPWSTR)L"LineWidthPix", 1, 0, Path);
 	param.AimOption.TextWidthPix = Read1Param((LPWSTR)L"AimOption", (LPWSTR)L"TextWidthPix", 20, 0, Path);
 	param.AimOption.TextHeightPix = Read1Param((LPWSTR)L"AimOption", (LPWSTR)L"TextHeightPix", 7, 0, Path);
+	param.AimOption.TextColor = (COLORREF)Read1Param((LPWSTR)L"AimOption", (LPWSTR)L"TextColor", 0, 0, Path);
 
 	param.AimOption.AimText[0].Active = Read1Param((LPWSTR)L"AimOption", (LPWSTR)L"AimText[0]Active", 1, 0, Path);
 	param.AimOption.AimText[0].Offset = Read1Param((LPWSTR)L"AimOption", (LPWSTR)L"AimText[0]Offset", 40, 0, Path);	
@@ -263,6 +264,7 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 	Save1Param((LPWSTR)L"AimOption", (LPWSTR)L"LineWidthPix", param.AimOption.LineWidthPix, 0, Path);
 	Save1Param((LPWSTR)L"AimOption", (LPWSTR)L"TextWidthPix", param.AimOption.TextWidthPix, 0, Path);
 	Save1Param((LPWSTR)L"AimOption", (LPWSTR)L"TextHeightPix", param.AimOption.TextHeightPix, 0, Path);
+	Save1Param((LPWSTR)L"AimOption", (LPWSTR)L"TextColor", param.AimOption.TextColor, 0, Path);
 
 	Save1Param((LPWSTR)L"AimOption", (LPWSTR)L"AimText[0]Active", param.AimOption.AimText[0].Active, 0, Path);
 	Save1Param((LPWSTR)L"AimOption", (LPWSTR)L"AimText[0]Offset", param.AimOption.AimText[0].Offset, 0, Path);

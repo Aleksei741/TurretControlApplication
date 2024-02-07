@@ -65,6 +65,7 @@ typedef struct
 	UINT TextWidthPix;
 	UINT TextHeightPix;
 	AimText_DType AimText[3];
+	COLORREF TextColor;
 }AimOption_DType;
 
 typedef struct

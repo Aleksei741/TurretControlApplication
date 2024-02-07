@@ -76,11 +76,17 @@ LRESULT CALLBACK OptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 				break;*/
 			case EditOptionHeight:
 				if (HIWORD(wp) == EN_UPDATE)
+				{
 					param.VideoOption.height = GetDlgItemInt(hWnd, EditOptionHeight, NULL, false);
+					param.AimOption.X = param.VideoOption.height / 2;
+				}
 				break;
 			case EditOptionWeight:
 				if (HIWORD(wp) == EN_UPDATE)
+				{
 					param.VideoOption.weight = GetDlgItemInt(hWnd, EditOptionWeight, NULL, false);
+					param.AimOption.Y = param.VideoOption.weight / 2;
+				}
 				break;
 			case EditOptionFramerate:
 				if (HIWORD(wp) == EN_UPDATE)
