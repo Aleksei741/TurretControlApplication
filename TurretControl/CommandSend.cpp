@@ -90,30 +90,8 @@ DWORD WINAPI TicProcedure(CONST LPVOID lpParam)
 				param.fSendTurrenParam = FALSE;
 		}
 
-		//Алгоритм ускорения
-		if (param.ControlOption.Motor1Acceleration &&
-			MotorCommand.timeM1Action + param.ControlOption.Motor1DelayAcceleration < clock() &&
-			MotorCommand.motor1 != 0 &&
-			param.ControlOption.Motor1SpeedLow < param.ControlOption.Motor1SpeedHigh)
-		{
-			if(MotorCommand.motor1 < 0)
-				MotorCommand.motor1 = -1 * param.ControlOption.Motor1SpeedHigh;
-			else
-				MotorCommand.motor1 = param.ControlOption.Motor1SpeedHigh;
-		}
-
-		if (param.ControlOption.Motor2Acceleration &&
-			MotorCommand.timeM2Action + param.ControlOption.Motor2DelayAcceleration < clock() &&
-			MotorCommand.motor2 != 0 &&
-			param.ControlOption.Motor2SpeedLow < param.ControlOption.Motor2SpeedHigh)
-		{
-			if (MotorCommand.motor2 < 0)
-				MotorCommand.motor2 = -1 * param.ControlOption.Motor2SpeedHigh;
-			else
-				MotorCommand.motor2 = param.ControlOption.Motor2SpeedHigh;
-		}
-
-		ResumeThread(hTreadSendCommandProcedure);
+		if(param.CotrolSource != MOUSE)
+			ResumeThread(hTreadSendCommandProcedure);
 	}
 }
 //------------------------------------------------------------------------------
@@ -266,16 +244,19 @@ BOOL GetComandConectionStatus(void)
 	return statusConetcion;
 }
 //------------------------------------------------------------------------------
-void SetComand(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack)
+void SetComandButton(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack)
 {
 	int lr;
 	int ud;
 
+	if (param.CotrolSource != KEYBOARD)
+		return;
+
 	//Определяем нажатие кнопки 
 	if (fLeft)
-		lr = -1 * param.ControlOption.Motor1SpeedLow;
+		lr = -32000;
 	else if (fRight)
-		lr = param.ControlOption.Motor1SpeedLow;
+		lr = 32000;
 	else
 		lr = 0;
 
@@ -284,21 +265,16 @@ void SetComand(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack)
 	{
 		MotorCommand.motor1 = 0;
 	}
-	else if (MotorCommand.motor1 == 0 && lr != 0)
-	{
-		MotorCommand.timeM1Action = clock();
-		MotorCommand.motor1 = lr;
-	}
-	else if (lr == 0)
+	else
 	{
 		MotorCommand.motor1 = lr;
 	}
 
 	//Определяем нажатие кнопки 
 	if (fUp)
-		ud = param.ControlOption.Motor2SpeedLow;
+		ud = 32000;
 	else if (fDown)
-		ud = -1 * param.ControlOption.Motor2SpeedLow;
+		ud = -32000;
 	else
 		ud = 0;
 
@@ -307,12 +283,7 @@ void SetComand(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack)
 	{
 		MotorCommand.motor2 = 0;
 	}
-	else if (MotorCommand.motor2 == 0 && ud != 0)
-	{
-		MotorCommand.timeM2Action = clock();
-		MotorCommand.motor2 = ud;
-	}
-	else if (ud == 0)
+	else
 	{
 		MotorCommand.motor2 = ud;
 	}
@@ -324,6 +295,42 @@ void SetComand(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack)
 
 	if (TransmiteMode == TX_SOCKET_COMMAND)
 	{		
+		ResumeThread(hTreadSendCommandProcedure);
+	}
+}
+//------------------------------------------------------------------------------
+void SetComandMouse(INT lr, INT ud, BOOL fAttack)
+{
+	if (param.CotrolSource != MOUSE)
+		return;
+
+	//Задаем движение
+	if (param.HealPoint <= 0 && param.DamageOption.MovementOff)
+	{
+		MotorCommand.motor1 = 0;
+	}
+	else
+	{
+		MotorCommand.motor1 = lr;
+	}
+
+	//Задаем движение
+	if (param.HealPoint <= 0 && param.DamageOption.MovementOff)
+	{
+		MotorCommand.motor2 = 0;
+	}
+	else
+	{
+		MotorCommand.motor2 = ud;
+	}
+
+	if (param.HealPoint <= 0 && param.DamageOption.WeaponOff)
+		MotorCommand.trigger = 0;
+	else
+		MotorCommand.trigger = fAttack;
+
+	if (TransmiteMode == TX_SOCKET_COMMAND)
+	{
 		ResumeThread(hTreadSendCommandProcedure);
 	}
 }

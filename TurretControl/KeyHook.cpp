@@ -25,6 +25,8 @@ static UCHAR KeyUp;
 // Секция прототипов локальных функций
 //******************************************************************************
 LRESULT WINAPI KeyboardCallback(int, WPARAM, LPARAM);
+
+void (*ESCInterrupt)(void) = NULL;
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -84,6 +86,9 @@ LRESULT CALLBACK KeyboardCallback(int nCode, WPARAM wParam, LPARAM lParam)
                 break;
             case VK_SPACE:
                  fAttack = TRUE;
+                break;
+            case VK_ESCAPE:
+                if (ESCInterrupt) ESCInterrupt();
                 break;
             }
             break;

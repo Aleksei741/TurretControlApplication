@@ -1,12 +1,11 @@
 #pragma once
-#ifndef _CONTROL_SEND_H // Блокируем повторное включение этого модуля
-#define _CONTROL_SEND_H
+#ifndef _MOUSE_HOOK_H // Блокируем повторное включение этого модуля
+#define _MOUSE_HOOK_H
 //******************************************************************************
 // Секция include
 //******************************************************************************
-#include "main.h"
-#include <chrono>
-#include <Windows.h>
+#include <windows.h>
+#include <strsafe.h>
 //******************************************************************************
 // Секция определения констант
 //******************************************************************************
@@ -14,32 +13,18 @@
 //******************************************************************************
 // Секция определения типов
 //******************************************************************************
-typedef struct
+typedef struct _MYHOOKDATA
 {
-	int val;
-	clock_t time;
-}DamageStore_DType;
+    int nType;
+    HOOKPROC hkprc;
+    HHOOK hhook;
+} MYHOOKDATA;
 
-typedef struct
-{
-	int motor1;
-	int motor2;
-	int trigger;
-}MotorCommand_DType;
-
-typedef struct {
-	unsigned char* data;
-	int size;
-	bool* flag;
-}CommandData_DType;
-
-typedef enum TransmiteMode_DType
-{
-	TX_SOCKET_OFF,
-	TX_SOCKET_SET_PARAM,
-	TX_SOCKET_COMMAND,
-	TX_SOCKET_VIDEO_ON,
-	TX_SOCKET_VIDEO_OFF,
+struct MOUSE_STATUStypedef {
+	INT xPosition;
+	INT yPosition;
+	BOOL LeftButton;
+	BOOL RightButoon;
 };
 //******************************************************************************
 // Секция определения глобальных переменных
@@ -48,18 +33,11 @@ typedef enum TransmiteMode_DType
 //******************************************************************************
 // Секция прототипов глобальных функций
 //******************************************************************************
-void SendCommandProcessStart(LPWSTR strIP);
-void SetIPCommand(LPWSTR strIP);
-void SendCommandProcessStop(void);
-BOOL GetComandConectionStatus(void);
-void SetComandButton(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack);
-void SetComandMouse(INT lr, INT ud, BOOL fAttack);
-extern void (*CallbackComandConectionStatus)(BOOL index);
-extern void (*CallbackVideoStatus)(BOOL status);
-extern void (*CallbackHPStatus)(INT index, clock_t time);
-BOOL SendCommandVideoON(void);
-BOOL SendCommandVideoOFF(void);
-BOOL DamageReset(void);
+UCHAR MouseProcess_init(void);
+UCHAR MouseProcess_deinit(void);
+UCHAR MouseProcess_start(HWND hwndMain);
+UCHAR MouseProcess_stop(void);
+extern void (*MouseHookInterruptProcessing)(INT lr, INT ud, BOOL fAttack);
 //******************************************************************************
 // Секция определения макросов
 //******************************************************************************

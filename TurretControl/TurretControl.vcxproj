@@ -145,6 +145,7 @@
     <ClInclude Include="ImgProcessor.h" />
     <ClInclude Include="KeyHook.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="MouseProcess.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="video_H264_decode.h" />
     <ClInclude Include="WindowAimOption.h" />
@@ -158,6 +159,7 @@
     <ClCompile Include="ImgProcessor.cpp" />
     <ClCompile Include="KeyHook.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MouseProcess.cpp" />
     <ClCompile Include="video_H264_decode.cpp" />
     <ClCompile Include="WindowAimOption.cpp" />
     <ClCompile Include="WindowControlOption.cpp" />

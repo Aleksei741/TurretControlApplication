@@ -14,6 +14,7 @@ enum {
 	ResetHPButtonClik,
 	ConnectButtonClik,
 	VideoButtonClik,
+	MouseControlButtonClik,
 
 	EditIP,
 	EditTimer,

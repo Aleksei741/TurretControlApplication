@@ -26,6 +26,7 @@
 #include "KeyHook.h"
 #include "video_H264_decode.h"
 #include "ImgProcessor.h"
+#include "MouseProcess.h"
 #include "WindowVideoOption.h"
 #include "WindowControlOption.h"
 #include "WindowDamageOption.h"
@@ -44,6 +45,11 @@
 
 #define PORT_RTP_H264 20100
 #define IP_RTP_H264 "0.0.0.0"
+
+typedef enum ControlSource_dType {
+	KEYBOARD,
+	MOUSE
+};
 //******************************************************************************
 // Секция определения типов
 //******************************************************************************
@@ -104,6 +110,7 @@ typedef struct
 struct UserParameters_DType
 {
 	UCHAR VideoActive;
+	ControlSource_dType CotrolSource;
 	INT HealPoint;
 	clock_t timeDemage;
 	BOOL fSendTurrenParam;

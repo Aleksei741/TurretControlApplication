@@ -33,6 +33,7 @@ HWND hwndButtonVideo;
 HWND hwndButtonResetHP;
 HWND hwndEditHP;
 HWND hwndEditTimer;
+HWND hwndButtonMouseControl;
 
 HWND hwndHealPointArea;
 HWND hwndWideo;
@@ -47,6 +48,7 @@ WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInst, HICON I
 LRESULT CALLBACK WideoWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 void SetGUICheckBoxConectionControl(BOOL status);
 void WriteParametersFGUI(void);
+void StopMouseCtrl(void);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -136,6 +138,8 @@ void MainWindAddWidgets(HWND hWnd)
 	hwndEditTimer = CreateWindow(WC_EDIT, L"00:00", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 50, 110, 65, 20, hWnd, (HMENU)EditTimer, g_hInst, NULL);
 	hwndButtonResetHP = CreateWindow(WC_BUTTON, L"Reset HP", WS_VISIBLE | WS_CHILD | BS_CENTER | BS_MULTILINE, 15, 130, 100, 20, hWnd, (HMENU)ResetHPButtonClik, g_hInst, NULL);
 	//SendMessage(hwndButtonResetHP, WM_SETFONT, (WPARAM)h_font, (LPARAM)1);
+
+	hwndButtonMouseControl = CreateWindow(WC_BUTTON, L"Mouse", WS_VISIBLE | WS_CHILD, 15, 160, 100, 20, hWnd, (HMENU)MouseControlButtonClik, g_hInst, NULL);
 	
 	SendMessage(hwndButtonConnect, BM_SETDONTCLICK, TRUE, NULL);
 	SendMessage(hwndButtonVideo, BM_SETDONTCLICK, TRUE, NULL);
@@ -227,6 +231,12 @@ void SetGUIHPStatus(INT status, clock_t time)
 	
 }
 //------------------------------------------------------------------------------
+void StopMouseCtrl(void)
+{
+	MouseProcess_stop();
+	param.CotrolSource = KEYBOARD;
+}
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -240,6 +250,12 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 	case WM_COMMAND:
 		switch (wp)
 		{
+		case MouseControlButtonClik:
+			param.CotrolSource = MOUSE;
+			ESCInterrupt = &StopMouseCtrl;
+			MouseProcess_start(hWnd);
+			SetFocus(hWnd);
+			break;
 		case ResetHPButtonClik:
 			DamageReset();
 			SetFocus(hWnd);
@@ -283,6 +299,8 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		}
 		break;
 	case WM_CREATE:	//вызывается при создании окна
+		param.CotrolSource = KEYBOARD;
+
 		MainWindAddMenus(hWnd);
 		MainWindAddWidgets(hWnd);
 		MainWindCreateWideoArea(hWnd);
@@ -300,13 +318,18 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		param.HealPoint = param.DamageOption.HealPoint;
 		SetGUIHPStatus(param.HealPoint, param.DamageOption.DamageDelayMinute * 60 * 1000 + param.DamageOption.DamageDelaySecunde * 1000);
 
-		CallbackKeyHook = &SetComand;
+		MouseHookInterruptProcessing = &SetComandMouse;
+		MouseProcess_init();
+
+		CallbackKeyHook = &SetComandButton;
 		SetKeyboardHook(NULL, NULL, NULL, NULL);
 		break;
 	case WM_DESTROY:	//взывается при закрытии окна
 		SaveFileDefault(param);
 		SendCommandProcessStop();
 		DelKeyboardHook(NULL, NULL, NULL, NULL);
+		MouseProcess_stop();
+		MouseProcess_deinit();
 		RTPStop();
 		PostQuitMessage(0);
 		break;
