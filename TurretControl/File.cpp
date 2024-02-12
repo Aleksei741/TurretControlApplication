@@ -94,7 +94,7 @@ LPTSTR SaveFileUser(const UserParameters_DType param)
 {
 	OPENFILENAME lpofn;
 	TCHAR szFile[MAX_PATH];
-	CHAR saveFileStatus = 0;
+	CHAR saveFileStatus = 0;	
 
 	ZeroMemory(&lpofn, sizeof(lpofn));
 	lpofn.lStructSize = sizeof(lpofn);
@@ -127,6 +127,7 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	CHAR cnt;
 	TCHAR szBuf[128];
 	UINT retParam;
+	float degree_in_step;
 
 	//-------------------------------------------------------------------------------------------------------------------------
 	//VideoOption
@@ -147,14 +148,41 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	);	
 	//-------------------------------------------------------------------------------------------------------------------------
 	//ControlOption
-	param.ControlOption.Motor1Acceleration = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1Acceleration", 1, 0, Path);
-	param.ControlOption.Motor1SpeedHigh = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1SpeedHigh", 400, 0, Path);
-	param.ControlOption.Motor1SpeedLow = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1SpeedLow", 200, 0, Path);
-	param.ControlOption.Motor2Acceleration = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2Acceleration", 1, 0, Path);
-	param.ControlOption.Motor2SpeedHigh = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2SpeedHigh", 400, 0, Path);
-	param.ControlOption.Motor2SpeedLow = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2SpeedLow", 200, 0, Path);
-	param.ControlOption.Motor1DelayAcceleration = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1DelayAcceleration", 2500, 0, Path);
-	param.ControlOption.Motor2DelayAcceleration = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2DelayAcceleration", 2500, 0, Path);
+	//M1
+	param.ControlOption.M1.RotationLimit = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationLimit", 180, 0, Path);
+	param.ControlOption.M1.RotationSpeedInt = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationSpeedInt", 1, 0, Path);
+	param.ControlOption.M1.RotationSpeedFrac = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationSpeedFrac", 0, 0, Path);
+	if (param.ControlOption.M1.RotationSpeedFrac < 10) param.ControlOption.M1.RotationSpeedFrac *= 100;
+	else if (param.ControlOption.M1.RotationSpeedFrac < 100) param.ControlOption.M1.RotationSpeedFrac *= 10;
+	param.ControlOption.M1.RotationSpeed = (float)param.ControlOption.M1.RotationSpeedInt + (float)param.ControlOption.M1.RotationSpeedFrac / 1000.0;
+	param.ControlOption.M1.StepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_StepsStepperMotor", 20, 0, Path);
+	param.ControlOption.M1.MicroStepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MicroStepsStepperMotor", 64, 0, Path);
+	param.ControlOption.M1.ReductionRatioStepperMotorInt = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_ReductionRatioStepperMotorInt", 10, 0, Path);
+	param.ControlOption.M1.ReductionRatioStepperMotorFrac = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_ReductionRatioStepperMotorFrac", 0, 0, Path);
+	if (param.ControlOption.M1.ReductionRatioStepperMotorFrac < 10) param.ControlOption.M1.ReductionRatioStepperMotorFrac *= 100;
+	else if (param.ControlOption.M1.ReductionRatioStepperMotorFrac < 100) param.ControlOption.M1.ReductionRatioStepperMotorFrac *= 10;
+	param.ControlOption.M1.ReductionRatioStepperMotor = (float)param.ControlOption.M1.ReductionRatioStepperMotorInt + (float)param.ControlOption.M1.ReductionRatioStepperMotorFrac / 1000.0;
+
+	degree_in_step = 360.0 / ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+	param.ControlOption.M1.Freq = (UINT)round(param.ControlOption.M1.RotationSpeed / degree_in_step);
+
+	//M2
+	param.ControlOption.M2.RotationLimit = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationLimit", 180, 0, Path);
+	param.ControlOption.M2.RotationSpeedInt = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationSpeedInt", 1, 0, Path);
+	param.ControlOption.M2.RotationSpeedFrac = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationSpeedFrac", 0, 0, Path);
+	if (param.ControlOption.M2.RotationSpeedFrac < 10) param.ControlOption.M2.RotationSpeedFrac *= 100;
+	else if (param.ControlOption.M2.RotationSpeedFrac < 100) param.ControlOption.M2.RotationSpeedFrac *= 10;
+	param.ControlOption.M2.RotationSpeed = (float)param.ControlOption.M2.RotationSpeedInt + (float)param.ControlOption.M2.RotationSpeedFrac / 1000.0;
+	param.ControlOption.M2.StepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_StepsStepperMotor", 20, 0, Path);
+	param.ControlOption.M2.MicroStepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MicroStepsStepperMotor", 64, 0, Path);
+	param.ControlOption.M2.ReductionRatioStepperMotorInt = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_ReductionRatioStepperMotorInt", 10, 0, Path);
+	param.ControlOption.M2.ReductionRatioStepperMotorFrac = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_ReductionRatioStepperMotorFrac", 0, 0, Path);
+	if (param.ControlOption.M2.ReductionRatioStepperMotorFrac < 10) param.ControlOption.M2.ReductionRatioStepperMotorFrac *= 100;
+	else if (param.ControlOption.M2.ReductionRatioStepperMotorFrac < 100) param.ControlOption.M2.ReductionRatioStepperMotorFrac *= 10;
+	param.ControlOption.M2.ReductionRatioStepperMotor = (float)param.ControlOption.M2.ReductionRatioStepperMotorInt + (float)param.ControlOption.M2.ReductionRatioStepperMotorFrac / 1000.0;
+
+	degree_in_step = 360.0 / ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+	param.ControlOption.M2.Freq = (UINT)round(param.ControlOption.M2.RotationSpeed / degree_in_step);
 	//-------------------------------------------------------------------------------------------------------------------------
 	//DamageOption
 	param.DamageOption.HealPoint = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"HealPoint", 20, 0, Path);
@@ -237,15 +265,22 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 		Path
 	);
 	//-------------------------------------------------------------------------------------------------------------------------
-	//VideoOption
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1Acceleration", param.ControlOption.Motor1Acceleration, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1SpeedHigh", param.ControlOption.Motor1SpeedHigh, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1SpeedLow", param.ControlOption.Motor1SpeedLow, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2Acceleration", param.ControlOption.Motor2Acceleration, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2SpeedHigh", param.ControlOption.Motor2SpeedHigh, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2SpeedLow", param.ControlOption.Motor2SpeedLow, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor1DelayAcceleration", param.ControlOption.Motor1DelayAcceleration, 0, Path);
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"Motor2DelayAcceleration", param.ControlOption.Motor2DelayAcceleration, 0, Path);
+	//ControlOption
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationLimit", param.ControlOption.M1.RotationLimit, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationSpeedInt", param.ControlOption.M1.RotationSpeedInt, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationSpeedFrac", param.ControlOption.M1.RotationSpeedFrac, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_StepsStepperMotor", param.ControlOption.M1.StepsStepperMotor, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MicroStepsStepperMotor", param.ControlOption.M1.MicroStepsStepperMotor, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_ReductionRatioStepperMotorInt", param.ControlOption.M1.ReductionRatioStepperMotorInt, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_ReductionRatioStepperMotorFrac", param.ControlOption.M1.ReductionRatioStepperMotorFrac, 0, Path);
+
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationLimit", param.ControlOption.M2.RotationLimit, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationSpeedInt", param.ControlOption.M2.RotationSpeedInt, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationSpeedFrac", param.ControlOption.M2.RotationSpeedFrac, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_StepsStepperMotor", param.ControlOption.M2.StepsStepperMotor, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MicroStepsStepperMotor", param.ControlOption.M2.MicroStepsStepperMotor, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_ReductionRatioStepperMotorInt", param.ControlOption.M2.ReductionRatioStepperMotorInt, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_ReductionRatioStepperMotorFrac", param.ControlOption.M2.ReductionRatioStepperMotorFrac, 0, Path);
 	//-------------------------------------------------------------------------------------------------------------------------
 	//DamageOption
 	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"HealPoint", param.DamageOption.HealPoint, 0, Path);

@@ -87,14 +87,23 @@ typedef struct
 
 typedef struct
 {
-	UINT Motor1SpeedLow;	// 
-	UINT Motor1SpeedHigh;  //
-	UINT Motor1Acceleration; //
-	UINT Motor1DelayAcceleration; //
-	UINT Motor2SpeedLow;	// 
-	UINT Motor2SpeedHigh;  //
-	UINT Motor2Acceleration; //
-	UINT Motor2DelayAcceleration; //
+	UINT RotationLimit;	//Ограничение вращения
+	UINT RotationSpeedInt;	//Скорость вращения, целая часть
+	UINT RotationSpeedFrac;	//Скорость вращения, дробная часть
+	float RotationSpeed;	//Скорость вращения
+	UINT StepsStepperMotor;	//Шагов шагового двигателя
+	UINT MicroStepsStepperMotor;	//Шагов шагового двигателя
+	UINT ReductionRatioStepperMotorInt;	//Коэффициегт редукции, целая часть
+	UINT ReductionRatioStepperMotorFrac;	//Коэффициегт редукции, дробная часть
+	float ReductionRatioStepperMotor;	//Коэффициегт редукции
+	UINT Freq;	//Частота управляющего сигнала
+	float Period;	//Период
+}ControlMotor_DType;
+
+typedef struct
+{
+	ControlMotor_DType M1;
+	ControlMotor_DType M2;
 }ControlOption_DType;
 
 typedef struct

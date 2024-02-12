@@ -22,6 +22,7 @@ static BOOL flagWriteGUI;
 //******************************************************************************
 LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 void WriteControlOptionFGUI(HWND hWnd);
+void WriteControlCalcParamFGUI(HWND hWnd);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -46,7 +47,7 @@ int WINAPI CreateWindow_ControlOption(HINSTANCE hInst, HWND parent)
 
 	MSG SoftwareMainMessege = { 0 };
 
-	hwndControlOptionWindow = CreateWindow(L"OptionControl", L"Настройки управления", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 350, parent, NULL, hInst, NULL);
+	hwndControlOptionWindow = CreateWindow(L"OptionControl", L"Настройки управления", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 750, parent, NULL, hInst, NULL);
 
 	ShowWindow(hwndControlOptionWindow, SW_NORMAL);
 	UpdateWindow(hwndControlOptionWindow);
@@ -70,119 +71,249 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 		{
 			switch (LOWORD(wp))
 			{
-			case CheckBoxM1AccelerationSpeed:
-				param.ControlOption.Motor1Acceleration = SendMessage(hWndControlOption[COPT_M1ACCELERATION], BM_GETCHECK, 0, 0);
-				break;
-			case CheckBoxM2AccelerationSpeed:
-				param.ControlOption.Motor2Acceleration = SendMessage(hWndControlOption[COPT_M2ACCELERATION], BM_GETCHECK, 0, 0);
-				break;
-			case EditM1SpeedLow:
+			//M1
+			case EditM1RotationLimit:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM1SpeedLow, NULL, false);
-					if (value < 1)
-						param.ControlOption.Motor1SpeedLow = 1;
-					else if (value > 1000)
-						param.ControlOption.Motor1SpeedLow = 1000;
+					value = GetDlgItemInt(hWnd, EditM1RotationLimit, NULL, false);
+					if (value >= 360)
+						param.ControlOption.M1.RotationLimit = 359;
 					else
-						param.ControlOption.Motor1SpeedLow = value;
+						param.ControlOption.M1.RotationLimit = value;
+
+					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
-			case EditM1SpeedHigh:
+			case EditM1RotationSpeedInt:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM1SpeedHigh, NULL, false);
-					if (value < 1)
-						param.ControlOption.Motor1SpeedHigh = 1;
-					else if (value > 1000)
-						param.ControlOption.Motor1SpeedHigh = 1000;
-					else
-						param.ControlOption.Motor1SpeedHigh = value;
+					param.ControlOption.M1.RotationSpeedInt = GetDlgItemInt(hWnd, EditM1RotationSpeedInt, NULL, false);
+					param.ControlOption.M1.RotationSpeedFrac = GetDlgItemInt(hWnd, EditM1RotationSpeedFrac, NULL, false);
+					if (param.ControlOption.M1.RotationSpeedFrac < 10) param.ControlOption.M1.RotationSpeedFrac *= 100;
+					else if (param.ControlOption.M1.RotationSpeedFrac < 100) param.ControlOption.M1.RotationSpeedFrac *= 10;
+					param.ControlOption.M1.RotationSpeed = (float)param.ControlOption.M1.RotationSpeedInt + (float)param.ControlOption.M1.RotationSpeedFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
-			case EditM2SpeedLow:
+			case EditM1RotationSpeedFrac:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM2SpeedLow, NULL, false);
-					if (value < 1)
-						param.ControlOption.Motor2SpeedLow = 1;
-					else if (value > 1000)
-						param.ControlOption.Motor2SpeedLow = 1000;
-					else
-						param.ControlOption.Motor2SpeedLow = value;
+					param.ControlOption.M1.RotationSpeedInt = GetDlgItemInt(hWnd, EditM1RotationSpeedInt, NULL, false);
+					param.ControlOption.M1.RotationSpeedFrac = GetDlgItemInt(hWnd, EditM1RotationSpeedFrac, NULL, false);
+					if (param.ControlOption.M1.RotationSpeedFrac < 10) param.ControlOption.M1.RotationSpeedFrac *= 100;
+					else if (param.ControlOption.M1.RotationSpeedFrac < 100) param.ControlOption.M1.RotationSpeedFrac *= 10;
+					param.ControlOption.M1.RotationSpeed = (float)param.ControlOption.M1.RotationSpeedInt + (float)param.ControlOption.M1.RotationSpeedFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
-			case EditM2SpeedHigh:
+			case EditM1StepsStepperMotor:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM2SpeedHigh, NULL, false);
+					value = GetDlgItemInt(hWnd, EditM1StepsStepperMotor, NULL, false);
 					if (value < 1)
-						param.ControlOption.Motor2SpeedHigh = 1;
+						param.ControlOption.M1.StepsStepperMotor = 1;
 					else if (value > 1000)
-						param.ControlOption.Motor2SpeedHigh = 1000;
+						param.ControlOption.M1.StepsStepperMotor = 10000;
 					else
-						param.ControlOption.Motor2SpeedHigh = value;
+						param.ControlOption.M1.StepsStepperMotor = value;
+					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
 
-			case EditM1DelayAcceleration:
+			case EditM1MicroStepsStepperMotor:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM1DelayAcceleration, NULL, false);
-					if (value < 500)
-						param.ControlOption.Motor1DelayAcceleration = 500;
+					value = GetDlgItemInt(hWnd, EditM1MicroStepsStepperMotor, NULL, false);
+					if (value < 1)
+						param.ControlOption.M1.MicroStepsStepperMotor = 1;
 					else if (value > 60000)
-						param.ControlOption.Motor1DelayAcceleration = 60000;
+						param.ControlOption.M1.MicroStepsStepperMotor = 60000;
 					else
-						param.ControlOption.Motor1DelayAcceleration = value;
+						param.ControlOption.M1.MicroStepsStepperMotor = value;
+
+					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
 
-			case EditM2DelayAcceleration:
+			case EditM1ReductionRatioStepperMotorInt:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM2DelayAcceleration, NULL, false);
-					if (value < 500)
-						param.ControlOption.Motor2DelayAcceleration = 500;
-					else if (value > 60000)
-						param.ControlOption.Motor2DelayAcceleration = 60000;
-					else
-						param.ControlOption.Motor2DelayAcceleration = value;
+					param.ControlOption.M1.ReductionRatioStepperMotorInt = GetDlgItemInt(hWnd, EditM1ReductionRatioStepperMotorInt, NULL, false);
+					param.ControlOption.M1.ReductionRatioStepperMotorFrac = GetDlgItemInt(hWnd, EditM1ReductionRatioStepperMotorFrac, NULL, false);
+					if (param.ControlOption.M1.ReductionRatioStepperMotorFrac < 10) param.ControlOption.M1.ReductionRatioStepperMotorFrac *= 100;
+					else if (param.ControlOption.M1.ReductionRatioStepperMotorFrac < 100) param.ControlOption.M1.ReductionRatioStepperMotorFrac *= 10;
+					param.ControlOption.M1.ReductionRatioStepperMotor = (float)param.ControlOption.M1.ReductionRatioStepperMotorInt + (float)param.ControlOption.M1.ReductionRatioStepperMotorFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
-				
+			case EditM1ReductionRatioStepperMotorFrac:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					param.ControlOption.M1.ReductionRatioStepperMotorInt = GetDlgItemInt(hWnd, EditM1ReductionRatioStepperMotorInt, NULL, false);
+					param.ControlOption.M1.ReductionRatioStepperMotorFrac = GetDlgItemInt(hWnd, EditM1ReductionRatioStepperMotorFrac, NULL, false);
+					if (param.ControlOption.M1.ReductionRatioStepperMotorFrac < 10) param.ControlOption.M1.ReductionRatioStepperMotorFrac *= 100;
+					else if (param.ControlOption.M1.ReductionRatioStepperMotorFrac < 100) param.ControlOption.M1.ReductionRatioStepperMotorFrac *= 10;
+					param.ControlOption.M1.ReductionRatioStepperMotor = (float)param.ControlOption.M1.ReductionRatioStepperMotorInt + (float)param.ControlOption.M1.ReductionRatioStepperMotorFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+			//M2
+			case EditM2RotationLimit:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					value = GetDlgItemInt(hWnd, EditM2RotationLimit, NULL, false);
+					if (value >= 360)
+						param.ControlOption.M2.RotationLimit = 359;
+					else
+						param.ControlOption.M2.RotationLimit = value;
+
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+			case EditM2RotationSpeedInt:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					param.ControlOption.M2.RotationSpeedInt = GetDlgItemInt(hWnd, EditM2RotationSpeedInt, NULL, false);
+					param.ControlOption.M2.RotationSpeedFrac = GetDlgItemInt(hWnd, EditM2RotationSpeedFrac, NULL, false);
+					if (param.ControlOption.M2.RotationSpeedFrac < 10) param.ControlOption.M2.RotationSpeedFrac *= 100;
+					else if (param.ControlOption.M2.RotationSpeedFrac < 100) param.ControlOption.M2.RotationSpeedFrac *= 10;
+					param.ControlOption.M2.RotationSpeed = (float)param.ControlOption.M2.RotationSpeedInt + (float)param.ControlOption.M2.RotationSpeedFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+			case EditM2RotationSpeedFrac:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					param.ControlOption.M2.RotationSpeedInt = GetDlgItemInt(hWnd, EditM2RotationSpeedInt, NULL, false);
+					param.ControlOption.M2.RotationSpeedFrac = GetDlgItemInt(hWnd, EditM2RotationSpeedFrac, NULL, false);
+					if (param.ControlOption.M2.RotationSpeedFrac < 10) param.ControlOption.M2.RotationSpeedFrac *= 100;
+					else if (param.ControlOption.M2.RotationSpeedFrac < 100) param.ControlOption.M2.RotationSpeedFrac *= 10;
+					param.ControlOption.M2.RotationSpeed = (float)param.ControlOption.M2.RotationSpeedInt + (float)param.ControlOption.M2.RotationSpeedFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+			case EditM2StepsStepperMotor:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					value = GetDlgItemInt(hWnd, EditM2StepsStepperMotor, NULL, false);
+					if (value < 1)
+						param.ControlOption.M2.StepsStepperMotor = 1;
+					else if (value > 1000)
+						param.ControlOption.M2.StepsStepperMotor = 10000;
+					else
+						param.ControlOption.M2.StepsStepperMotor = value;
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+
+			case EditM2MicroStepsStepperMotor:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					value = GetDlgItemInt(hWnd, EditM2MicroStepsStepperMotor, NULL, false);
+					if (value < 1)
+						param.ControlOption.M2.MicroStepsStepperMotor = 1;
+					else if (value > 60000)
+						param.ControlOption.M2.MicroStepsStepperMotor = 60000;
+					else
+						param.ControlOption.M2.MicroStepsStepperMotor = value;
+
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+
+			case EditM2ReductionRatioStepperMotorInt:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					param.ControlOption.M2.ReductionRatioStepperMotorInt = GetDlgItemInt(hWnd, EditM2ReductionRatioStepperMotorInt, NULL, false);
+					param.ControlOption.M2.ReductionRatioStepperMotorFrac = GetDlgItemInt(hWnd, EditM2ReductionRatioStepperMotorFrac, NULL, false);
+					if (param.ControlOption.M2.ReductionRatioStepperMotorFrac < 10) param.ControlOption.M2.ReductionRatioStepperMotorFrac *= 100;
+					else if (param.ControlOption.M2.ReductionRatioStepperMotorFrac < 100) param.ControlOption.M2.ReductionRatioStepperMotorFrac *= 10;
+					param.ControlOption.M2.ReductionRatioStepperMotor = (float)param.ControlOption.M2.ReductionRatioStepperMotorInt + (float)param.ControlOption.M2.ReductionRatioStepperMotorFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+			case EditM2ReductionRatioStepperMotorFrac:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					param.ControlOption.M2.ReductionRatioStepperMotorInt = GetDlgItemInt(hWnd, EditM2ReductionRatioStepperMotorInt, NULL, false);
+					param.ControlOption.M2.ReductionRatioStepperMotorFrac = GetDlgItemInt(hWnd, EditM2ReductionRatioStepperMotorFrac, NULL, false);
+					if (param.ControlOption.M2.ReductionRatioStepperMotorFrac < 10) param.ControlOption.M2.ReductionRatioStepperMotorFrac *= 100;
+					else if (param.ControlOption.M2.ReductionRatioStepperMotorFrac < 100) param.ControlOption.M2.ReductionRatioStepperMotorFrac *= 10;
+					param.ControlOption.M2.ReductionRatioStepperMotor = (float)param.ControlOption.M2.ReductionRatioStepperMotorInt + (float)param.ControlOption.M2.ReductionRatioStepperMotorFrac / 1000.0;
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
 			}
 		}
 		break;
-	case WM_CREATE:	//вызывается при создании окна		
+	case WM_CREATE:	//вызывается при создании окна	
+		CreateWindow(WC_STATIC, L"1 двигатель", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
 
-		CreateWindow(WC_STATIC, L"Скорость вращения 1 двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"200", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1SpeedLow, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Предел вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"180", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1RotationLimit, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"град", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Скорость вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 200, 25, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"1", WS_VISIBLE | WS_CHILD | ES_RIGHT | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM1RotationSpeedInt, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L".", WS_VISIBLE | WS_CHILD, 380, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 5, 25, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_LEFT | ES_NUMBER, 385, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM1RotationSpeedFrac, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"град/сек", WS_VISIBLE | WS_CHILD, 416, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Количество шагов двигателя на оборот", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"20", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1StepsStepperMotor, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Микрошагов на один шаг двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"64", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1MicroStepsStepperMotor, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"мик.шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Коэффициент редукции редуктора", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"2", WS_VISIBLE | WS_CHILD | ES_RIGHT | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM1ReductionRatioStepperMotorInt, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L".", WS_VISIBLE | WS_CHILD, 380, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 5, 25, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"5", WS_VISIBLE | WS_CHILD | ES_LEFT | ES_NUMBER, 385, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM1ReductionRatioStepperMotorFrac, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L" ", WS_VISIBLE | WS_CHILD, 416, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Частота сигнала", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1FreqSignal, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"Гц", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
-				
-		CreateWindow(WC_STATIC, L"Максимальная скорость вращения 1 двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"400", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 22, hWnd, (HMENU)EditM1SpeedHigh, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Период сигнала", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1PeriodSignal, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"с", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"2 двигатель", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Предел вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"180", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2RotationLimit, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"град", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Скорость вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 200, 25, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"1", WS_VISIBLE | WS_CHILD | ES_RIGHT | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM2RotationSpeedInt, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L".", WS_VISIBLE | WS_CHILD, 380, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 5, 25, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_LEFT | ES_NUMBER, 385, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM2RotationSpeedFrac, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"град/сек", WS_VISIBLE | WS_CHILD, 416, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Количество шагов двигателя на оборот", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"20", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2StepsStepperMotor, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Микрошагов на один шаг двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"64", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2MicroStepsStepperMotor, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"мик.шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Коэффициент редукции редуктора", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"2", WS_VISIBLE | WS_CHILD | ES_RIGHT | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM2ReductionRatioStepperMotorInt, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L".", WS_VISIBLE | WS_CHILD, 380, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 5, 25, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"5", WS_VISIBLE | WS_CHILD | ES_LEFT | ES_NUMBER, 385, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 30, 25, hWnd, (HMENU)EditM2ReductionRatioStepperMotorFrac, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L" ", WS_VISIBLE | WS_CHILD, 416, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Частота сигнала", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2FreqSignal, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"Гц", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
-		hWndControlOption[COPT_M1ACCELERATION] = CreateWindow(WC_BUTTON, L"Ускорение вращения 1 двигателя", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 400, 22, hWnd, (HMENU)CheckBoxM1AccelerationSpeed, hInstOption, NULL);
-
-		CreateWindow(WC_STATIC, L"Задержка включения ускорения 1 двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"2500", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 22, hWnd, (HMENU)EditM1DelayAcceleration, hInstOption, NULL);
-		CreateWindow(WC_STATIC, L"мс", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
-
-		CreateWindow(WC_STATIC, L"Скорость вращения 2 двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"200", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2SpeedLow, hInstOption, NULL);
-		CreateWindow(WC_STATIC, L"Гц", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
-
-		CreateWindow(WC_STATIC, L"Максимальная скорость вращения 2 двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"400", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 22, hWnd, (HMENU)EditM2SpeedHigh, hInstOption, NULL);
-		CreateWindow(WC_STATIC, L"Гц", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
-
-		hWndControlOption[COPT_M2ACCELERATION] = CreateWindow(WC_BUTTON, L"Ускорение вращения 2 двигателя", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 400, 22, hWnd, (HMENU)CheckBoxM2AccelerationSpeed, hInstOption, NULL);
-
-		CreateWindow(WC_STATIC, L"Задержка включения ускорения 2 двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"2500", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 22, hWnd, (HMENU)EditM2DelayAcceleration, hInstOption, NULL);
-		CreateWindow(WC_STATIC, L"мс", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Период сигнала", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2PeriodSignal, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"с", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
 		WriteControlOptionFGUI(hWnd);
 		break;
@@ -209,23 +340,55 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 void WriteControlOptionFGUI(HWND hWnd)
 {
 	flagWriteGUI = TRUE;
+	SetDlgItemInt(hWnd, EditM1RotationLimit, param.ControlOption.M1.RotationLimit, false);
+	SetDlgItemInt(hWnd, EditM1RotationSpeedInt, param.ControlOption.M1.RotationSpeedInt, false);
+	SetDlgItemInt(hWnd, EditM1RotationSpeedFrac, param.ControlOption.M1.RotationSpeedFrac, false);
+	SetDlgItemInt(hWnd, EditM1StepsStepperMotor, param.ControlOption.M1.StepsStepperMotor, false);
+	SetDlgItemInt(hWnd, EditM1MicroStepsStepperMotor, param.ControlOption.M1.MicroStepsStepperMotor, false);
+	SetDlgItemInt(hWnd, EditM1ReductionRatioStepperMotorInt, param.ControlOption.M1.ReductionRatioStepperMotorInt, false);
+	SetDlgItemInt(hWnd, EditM1ReductionRatioStepperMotorFrac, param.ControlOption.M1.ReductionRatioStepperMotorFrac, false);
 
-	if (param.ControlOption.Motor1Acceleration)
-		SendMessage(hWndControlOption[COPT_M1ACCELERATION], BM_SETCHECK, BST_CHECKED, 0);
-	else
-		SendMessage(hWndControlOption[COPT_M1ACCELERATION], BM_SETCHECK, BST_UNCHECKED, 0);
+	SetDlgItemInt(hWnd, EditM2RotationLimit, param.ControlOption.M2.RotationLimit, false);
+	SetDlgItemInt(hWnd, EditM2RotationSpeedInt, param.ControlOption.M2.RotationSpeedInt, false);
+	SetDlgItemInt(hWnd, EditM2RotationSpeedFrac, param.ControlOption.M2.RotationSpeedFrac, false);
+	SetDlgItemInt(hWnd, EditM2StepsStepperMotor, param.ControlOption.M2.StepsStepperMotor, false);
+	SetDlgItemInt(hWnd, EditM2MicroStepsStepperMotor, param.ControlOption.M2.MicroStepsStepperMotor, false);
+	SetDlgItemInt(hWnd, EditM2ReductionRatioStepperMotorInt, param.ControlOption.M2.ReductionRatioStepperMotorInt, false);
+	SetDlgItemInt(hWnd, EditM2ReductionRatioStepperMotorFrac, param.ControlOption.M2.ReductionRatioStepperMotorFrac, false);
 
-	if (param.ControlOption.Motor2Acceleration)
-		SendMessage(hWndControlOption[COPT_M2ACCELERATION], BM_SETCHECK, BST_CHECKED, 0);
-	else
-		SendMessage(hWndControlOption[COPT_M2ACCELERATION], BM_SETCHECK, BST_UNCHECKED, 0);
-
-	SetDlgItemInt(hWnd, EditM1SpeedLow, param.ControlOption.Motor1SpeedLow, false);
-	SetDlgItemInt(hWnd, EditM1SpeedHigh, param.ControlOption.Motor1SpeedHigh, false);
-	SetDlgItemInt(hWnd, EditM2SpeedLow, param.ControlOption.Motor2SpeedLow, false);
-	SetDlgItemInt(hWnd, EditM2SpeedHigh, param.ControlOption.Motor2SpeedHigh, false);
-	SetDlgItemInt(hWnd, EditM1DelayAcceleration, param.ControlOption.Motor1DelayAcceleration, false);
-	SetDlgItemInt(hWnd, EditM2DelayAcceleration, param.ControlOption.Motor2DelayAcceleration, false);
+	WriteControlCalcParamFGUI(hWnd);
 
 	flagWriteGUI = FALSE;
+}
+//------------------------------------------------------------------------------
+void WriteControlCalcParamFGUI(HWND hWnd)
+{
+	TCHAR szBuf[128];
+	float degree_in_step = 360.0 / ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+
+	param.ControlOption.M1.Freq = (UINT)round(param.ControlOption.M1.RotationSpeed / degree_in_step);
+	param.ControlOption.M1.Period = 1.0 / (float)param.ControlOption.M1.Freq;
+	if (param.ControlOption.M1.Period < 0.001)
+	{
+		param.ControlOption.M1.Period = 0.001;
+		param.ControlOption.M1.Freq = 1000;
+	}
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.Period);
+
+	SetDlgItemInt(hWnd, EditM1FreqSignal, param.ControlOption.M1.Freq, false);
+	SetDlgItemText(hWnd, EditM1PeriodSignal, szBuf);
+
+	degree_in_step = 360.0 / ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+
+	param.ControlOption.M2.Freq = (UINT)round(param.ControlOption.M2.RotationSpeed / degree_in_step);
+	param.ControlOption.M2.Period = 1.0 / (float)param.ControlOption.M2.Freq;
+	if (param.ControlOption.M2.Period < 0.001)
+	{
+		param.ControlOption.M2.Period = 0.001;
+		param.ControlOption.M2.Freq = 1000;
+	}
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.Period);
+
+	SetDlgItemInt(hWnd, EditM2FreqSignal, param.ControlOption.M2.Freq, false);
+	SetDlgItemText(hWnd, EditM2PeriodSignal, szBuf);
 }
