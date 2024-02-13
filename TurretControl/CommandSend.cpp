@@ -30,8 +30,8 @@ static std::list<DamageStore_DType> LDamage;
 static BOOL ResetDamage = FALSE;
 
 static std::queue<CommandData_DType> QParameters;
-static char CommandMassage[12] = { 'T', 'C', 0, 0, 0 ,0, 0, 0, 0, 0 ,0xA5 ,0xA5 };
-static char ReciveMassage[12] = { 0 };
+static char CommandMassage[12] = { 'T', 'C', 0, 0, 0 ,0, 0, 0, 0, 0, 0xA5, 0xA5 };
+static char ReciveMassage[30] = { 0 };
 SOCKET SOCKETConnection;
 
 static char chIP[30];
@@ -43,6 +43,9 @@ DWORD WINAPI TicProcedure(CONST LPVOID lpParam);
 void FillMotionCommand(void);
 void FillParamMassage(void);
 BOOL TurretParamSet(void);
+BOOL SetControlOption(void);
+void ParseInputData(void);
+BOOL RequestControlOption(void);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -90,27 +93,34 @@ DWORD WINAPI TicProcedure(CONST LPVOID lpParam)
 				param.fSendTurrenParam = FALSE;
 		}
 
-		if(param.CotrolSource != MOUSE)
+		//Заапрос параметров управления турели
+		if (param.ControlOption.fSendReqParam)
+		{
+			if (RequestControlOption())
+				param.ControlOption.fSendReqParam = FALSE;
+		}
+
+		//Уствноыка параметров управления турели
+		if (param.ControlOption.fSend)
+		{
+			if (SetControlOption())
+				param.ControlOption.fSend = FALSE;
+		}
+
+		//Запускаем передачу при работе с клавиатурой
+		if(param.CotrolSource == KEYBOARD)
 			ResumeThread(hTreadSendCommandProcedure);
 	}
 }
 //------------------------------------------------------------------------------
 DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam)
 {
-	DamageStore_DType Damage;
-	std::list<DamageStore_DType>::iterator itDamage;
-	INT HealPoint;
-	int i;
-
 	SOCKADDR_IN addr;
-	BOOL fCommand = FALSE;
 	int sizeofaddr;
 	static TransmiteMode_DType fLastTXMode;
 	char chIPBuffer[30];
 	int ret;
-	clock_t paramTimeDeamage_ms;
-	clock_t buffTimeDamage;
-
+	
 	while (1)
 	{
 		sizeofaddr = sizeof(addr);
@@ -135,12 +145,10 @@ DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam)
 			if (QParameters.empty())
 			{
 				FillMotionCommand();
-				fCommand = TRUE;
 			}
 			else
 			{
 				FillParamMassage();
-				fCommand = FALSE;
 			}
 			ReleaseMutex(hMutexSendCommand);
 			
@@ -161,66 +169,14 @@ DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam)
 				recv(SOCKETConnection, ReciveMassage, sizeof(ReciveMassage), NULL);
 			}
 
+			//Обработка ReciveMassage
+			ParseInputData();
+
 			//Отображение статуса соединения 
 			if (CallbackComandConectionStatus) CallbackComandConectionStatus(statusConetcion);
 
-			//Отображение статуса работы передачи видео 
-			if (CallbackVideoStatus) CallbackVideoStatus(ReciveMassage[2]);
-			
-			//-----------------------------------------------------------------------------------
-			paramTimeDeamage_ms = param.DamageOption.DamageDelayMinute * 60 * 1000 + param.DamageOption.DamageDelaySecunde * 1000;
-			//-----------------------------------------------------------------------------------
-			//Подсчет HP
-			if (ReciveMassage[3])
-			{
-				Damage.time = clock();
-				Damage.val = ReciveMassage[3];
-
-				LDamage.push_front(Damage);
-			}
-
-			if (ResetDamage)
-			{
-				LDamage.clear();
-				ResetDamage = FALSE;
-			}
-
-			while (!LDamage.empty())
-			{
-				itDamage = LDamage.end();
-				itDamage--;
-				if (itDamage->time + paramTimeDeamage_ms < clock())
-					LDamage.pop_back();
-				else
-					break;				
-			}
-
-			HealPoint = param.DamageOption.HealPoint;
-			itDamage = LDamage.begin();
-			for (i = 0; i < LDamage.size(); i++)
-			{				
-				HealPoint -= itDamage->val;
-				itDamage++;
-			}
-			param.HealPoint = HealPoint;
-			//-----------------------------------------------------------------------------------
-			//Вывод на дисплей
-			if (LDamage.empty())
-			{
-				buffTimeDamage = paramTimeDeamage_ms;
-			}
-			else
-			{
-				itDamage = LDamage.end();
-				itDamage--;
-				buffTimeDamage = itDamage->time + paramTimeDeamage_ms - clock();
-			}			
-			if (CallbackHPStatus) CallbackHPStatus(param.HealPoint, buffTimeDamage);
-			//-----------------------------------------------------------------------------------
-			fLastTXMode = TransmiteMode;
-
 			//Пауза
-			if (QParameters.empty() && fCommand)
+			if (QParameters.empty())
 				SuspendThread(hTreadSendCommandProcedure);
 			else if (statusConetcion == FALSE)
 				Sleep(250);
@@ -566,6 +522,410 @@ BOOL TurretParamSet(void)
 	//--------------------------------------------------------
 
 	//ResumeThread(hTreadSendCommandProcedure);
+	return TRUE;
+}
+//------------------------------------------------------------------------------
+void ParseInputData(void)
+{
+	unsigned int value;
+	int i;
+	DamageStore_DType Damage;
+	std::list<DamageStore_DType>::iterator itDamage;
+	INT HealPoint;
+	clock_t paramTimeDeamage_ms;
+	clock_t buffTimeDamage;
+
+	if (ReciveMassage[0] != 0x54 && ReciveMassage[1] != 0x43) //Turret Control
+		return;
+
+	//=================================================================================================================
+	//рабочее сообщение	
+	if (ReciveMassage[2] == 0x57) //Ответ рабочего режима
+	{
+		//Отображение статуса работы передачи видео 
+		if (CallbackVideoStatus) CallbackVideoStatus(ReciveMassage[21]);
+		//Подсчет HP
+		//-----------------------------------------------------------------------------------
+		paramTimeDeamage_ms = param.DamageOption.DamageDelayMinute * 60 * 1000 + param.DamageOption.DamageDelaySecunde * 1000;
+		//-----------------------------------------------------------------------------------		
+		if (ReciveMassage[19])
+		{
+			Damage.time = clock();
+			Damage.val = ReciveMassage[3];
+
+			LDamage.push_front(Damage);
+		}
+
+		if (ResetDamage)
+		{
+			LDamage.clear();
+			ResetDamage = FALSE;
+		}
+
+		while (!LDamage.empty())
+		{
+			itDamage = LDamage.end();
+			itDamage--;
+			if (itDamage->time + paramTimeDeamage_ms < clock())
+				LDamage.pop_back();
+			else
+				break;
+		}
+
+		HealPoint = param.DamageOption.HealPoint;
+		itDamage = LDamage.begin();
+		for (i = 0; i < LDamage.size(); i++)
+		{
+			HealPoint -= itDamage->val;
+			itDamage++;
+		}
+		param.HealPoint = HealPoint;
+		//-----------------------------------------------------------------------------------
+		//Вывод HP на дисплей
+		if (LDamage.empty())
+		{
+			buffTimeDamage = paramTimeDeamage_ms;
+		}
+		else
+		{
+			itDamage = LDamage.end();
+			itDamage--;
+			buffTimeDamage = itDamage->time + paramTimeDeamage_ms - clock();
+		}
+		if (CallbackHPStatus) CallbackHPStatus(param.HealPoint, buffTimeDamage);
+		//-----------------------------------------------------------------------------------
+		//Позиция турели
+		param.PositionM1 = ReciveMassage[3] && 0xFF;
+		param.PositionM1 = (ReciveMassage[4] >> 8) && 0xFF;
+		param.PositionM1 = (ReciveMassage[5] >> 16) && 0xFF;
+		param.PositionM1 = (ReciveMassage[6] >> 24) && 0xFF;
+
+		param.PositionM2 = ReciveMassage[7] && 0xFF;
+		param.PositionM2 = (ReciveMassage[8] >> 8) && 0xFF;
+		param.PositionM2 = (ReciveMassage[9] >> 16) && 0xFF;
+		param.PositionM2 = (ReciveMassage[10] >> 24) && 0xFF;
+
+		param.NeedPositionM1 = ReciveMassage[11] && 0xFF;
+		param.NeedPositionM1 = (ReciveMassage[12] >> 8) && 0xFF;
+		param.NeedPositionM1 = (ReciveMassage[13] >> 16) && 0xFF;
+		param.NeedPositionM1 = (ReciveMassage[14] >> 24) && 0xFF;
+
+		param.NeedPositionM2 = ReciveMassage[15] && 0xFF;
+		param.NeedPositionM2 = (ReciveMassage[16] >> 8) && 0xFF;
+		param.NeedPositionM2 = (ReciveMassage[17] >> 16) && 0xFF;
+		param.NeedPositionM2 = (ReciveMassage[18] >> 24) && 0xFF;
+	}
+	//=================================================================================================================
+	//Параметры управления
+	if (ReciveMassage[2] == 0x56) //Movement 
+	{
+		if (ReciveMassage[3] == 0x50) //Parameters
+		{
+			value = ReciveMassage[5] | (ReciveMassage[6] << 8) | (ReciveMassage[7] << 16) | (ReciveMassage[8] << 24);
+			if (ReciveMassage[4] == 0x01) //MaxSteppersStepMotor1
+			{
+				param.ControlOption.M1.NumStepsLimit = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x02) //MaxSteppersStepMotor2
+			{
+				param.ControlOption.M2.NumStepsLimit = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x11) //FreqMotor1
+			{
+				param.ControlOption.M1.Freq = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x12) //FreqMotor2
+			{
+				param.ControlOption.M2.Freq = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+		}
+		else if (ReciveMassage[3] == 0x46) //Flag
+		{
+			value = ReciveMassage[5];
+			if (ReciveMassage[4] == 0x4C) //FlagNoLimitStepMotor
+			{
+				param.ControlOption.FlagNoLimitStepMotor = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x5A) //FlagZeroPosition
+			{
+				param.ControlOption.FlagZeroPosition = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+		}
+	}
+}
+//------------------------------------------------------------------------------
+BOOL RequestControlOption(void)
+{
+	CommandData_DType massage;
+	static bool VMaxSteppersStepM1 = FALSE;
+	static bool VMaxSteppersStepM2 = FALSE;
+	static bool VFreqM1 = FALSE;
+	static bool VFreqM2 = FALSE;
+	static bool VFlagNoLimit = FALSE;
+	static bool VFlagZero = FALSE;
+
+	if (!statusConetcion)
+		return FALSE;
+
+	//--------------------------------------------------------	
+	if (!VMaxSteppersStepM1)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMaxSteppersStepM1;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x01;	//Max steppers step motor1
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VMaxSteppersStepM2)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMaxSteppersStepM2;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x02;	//Max steppers step motor2
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VFreqM1)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFreqM1;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x11;	//FreqMotor1
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!VFreqM2)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFreqM2;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x12;	//FreqMotor1
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!VFlagNoLimit)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFlagNoLimit;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'F';	//Flag
+		massage.data[4] = 'F';	//ZeroPosition
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!VFlagZero)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFlagZero;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'F';	//Flag
+		massage.data[4] = 'L';	//NoLimitStepMotor
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+
+	ResumeThread(hTreadSendCommandProcedure);
+	return TRUE;
+}
+//------------------------------------------------------------------------------
+BOOL SetControlOption(void)
+{
+	CommandData_DType massage;
+	static bool VMaxSteppersStepM1 = FALSE;
+	static bool VMaxSteppersStepM2 = FALSE;
+	static bool VFreqM1 = FALSE;
+	static bool VFreqM2 = FALSE;
+	static bool VFlagNoLimit = FALSE;
+	static bool VFlagZero = FALSE;
+
+	if (!statusConetcion)
+		return FALSE;
+
+	//--------------------------------------------------------	
+	if (!VMaxSteppersStepM1)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMaxSteppersStepM1;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x01;	//Max steppers step motor1
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.M1.NumStepsLimit & 0xFF;
+		massage.data[7] = (param.ControlOption.M1.NumStepsLimit >> 8) & 0xFF;
+		massage.data[8] = (param.ControlOption.M1.NumStepsLimit >> 16) & 0xFF;
+		massage.data[9] = (param.ControlOption.M1.NumStepsLimit >> 24) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VMaxSteppersStepM2)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMaxSteppersStepM2;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x02;	//Max steppers step motor2
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.M2.NumStepsLimit & 0xFF;
+		massage.data[7] = (param.ControlOption.M2.NumStepsLimit >> 8) & 0xFF;
+		massage.data[8] = (param.ControlOption.M2.NumStepsLimit >> 16) & 0xFF;
+		massage.data[9] = (param.ControlOption.M2.NumStepsLimit >> 24) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VFreqM1)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFreqM1;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x11;	//FreqMotor1
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.M1.Freq & 0xFF;
+		massage.data[7] = (param.ControlOption.M1.Freq >> 8) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!VFreqM2)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFreqM2;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x12;	//FreqMotor1
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.M2.Freq & 0xFF;
+		massage.data[7] = (param.ControlOption.M2.Freq >> 8) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!VFlagNoLimit)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFlagNoLimit;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'F';	//Flag
+		massage.data[4] = 'F';	//ZeroPosition
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.FlagZeroPosition;
+		param.ControlOption.FlagZeroPosition = 0;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!VFlagZero)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VFlagZero;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'F';	//Flag
+		massage.data[4] = 'L';	//NoLimitStepMotor
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.FlagNoLimitStepMotor;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+
+	ResumeThread(hTreadSendCommandProcedure);
 	return TRUE;
 }
 //------------------------------------------------------------------------------

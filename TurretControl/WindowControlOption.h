@@ -13,8 +13,15 @@
 //******************************************************************************
 #define LINE_SPACE_CONTROL_OPTION	32
 
-#define COPT_M1ACCELERATION	0
-#define COPT_M2ACCELERATION	1
+#define COPT_ZERO_POSITION	0
+#define COPT_NO_LIMIT	1
+
+#define COPT_EDIT_M1_ROTATION_SPEED	2
+#define COPT_EDIT_M2_ROTATION_SPEED	3
+#define COPT_EDIT_M1_REDUCTION_RATIO	4
+#define COPT_EDIT_M2_REDUCTION_RATIO	5
+
+#define COPT_TIMER 2028
 //******************************************************************************
 // Секция определения типов
 //******************************************************************************

@@ -26,6 +26,7 @@ unsigned long PixelDataSize;
 // Секция прототипов локальных функций
 //******************************************************************************
 void AimDrawing(HDC hCompatibleDC);
+void PositionDrawing(HDC hCompatibleDC, UINT Width, UINT Height);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -93,7 +94,7 @@ void ImgBufferSet(unsigned char* RGB, int height, int wight, int linesize)
 	DeleteDC(dc);
 	RedrawWindow(hwndWideo, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
 }
-
+//------------------------------------------------------------------------------
 void DrawImgCamera(HWND hWnd, HDC hDC)
 {
 	float proportion;
@@ -113,6 +114,7 @@ void DrawImgCamera(HWND hWnd, HDC hDC)
 	if (Bitmap.bmWidth > 0 && Bitmap.bmHeight > 0)
 	{
 		AimDrawing(hCompatibleDC);
+		PositionDrawing(hCompatibleDC, Bitmap.bmWidth, Bitmap.bmHeight);
 		
 		//Расчет пользовательского окна
 		proportion = (float)Bitmap.bmWidth / (float)Bitmap.bmHeight;
@@ -141,7 +143,7 @@ void DrawImgCamera(HWND hWnd, HDC hDC)
 	DeleteObject(hBitmap);
 	DeleteDC(hCompatibleDC);
 }
-
+//------------------------------------------------------------------------------
 void AimDrawing(HDC hCompatibleDC)
 {
 	HPEN hPen; //создаём перо
@@ -185,7 +187,49 @@ void AimDrawing(HDC hCompatibleDC)
 			TextOut(hCompatibleDC, Xright + 5, param.AimOption.Y + param.AimOption.AimText[cnt].Offset - param.AimOption.TextWidthPix / 2, param.AimOption.AimText[cnt].Text, lstrlen(param.AimOption.AimText[cnt].Text));
 		}
 	}
+	
+	DeleteObject(h_font);
+	DeleteObject(hPen);
+}
+//------------------------------------------------------------------------------
+void PositionDrawing(HDC hCompatibleDC, UINT Width, UINT Height)
+{
+	HPEN hPen; //создаём перо
+	int cnt;
+	HFONT h_font;
+	float steps_360;
+	float degree_in_step;
+	TCHAR szBuf[128];
+	float degree;
+
+	h_font = CreateFont(param.AimOption.TextWidthPix, param.AimOption.TextHeightPix, 0, 0,
+		FW_NORMAL, 0,
+		0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Arial");
+
+	SetTextColor(hCompatibleDC, param.AimOption.TextColor);
+	SetBkMode(hCompatibleDC, TRANSPARENT);
+	SelectObject(hCompatibleDC, h_font);
+
+	hPen = CreatePen(PS_SOLID, param.AimOption.LineWidthPix, param.AimOption.TextColor);
+	SelectObject(hCompatibleDC, hPen);
+		
+	//Позиционное обозначение
+	steps_360 = ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+	degree_in_step = 360.0 / steps_360;
+	degree = param.PositionM1 * degree_in_step;
+
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f\0", degree);
+	TextOut(hCompatibleDC, Width / 2, Height - 30, szBuf, lstrlen(szBuf));
+
+	steps_360 = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+	degree_in_step = 360.0 / steps_360;
+	degree = param.PositionM2 * degree_in_step;
+
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f\0", degree);
+	TextOut(hCompatibleDC, 10, Height / 2, szBuf, lstrlen(szBuf));
 
 	DeleteObject(h_font);
 	DeleteObject(hPen);
 }
+//------------------------------------------------------------------------------

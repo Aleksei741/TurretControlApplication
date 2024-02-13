@@ -87,14 +87,11 @@ typedef struct
 
 typedef struct
 {
+	UINT NumStepsLimit;
 	UINT RotationLimit;	//Ограничение вращения
-	UINT RotationSpeedInt;	//Скорость вращения, целая часть
-	UINT RotationSpeedFrac;	//Скорость вращения, дробная часть
 	float RotationSpeed;	//Скорость вращения
 	UINT StepsStepperMotor;	//Шагов шагового двигателя
 	UINT MicroStepsStepperMotor;	//Шагов шагового двигателя
-	UINT ReductionRatioStepperMotorInt;	//Коэффициегт редукции, целая часть
-	UINT ReductionRatioStepperMotorFrac;	//Коэффициегт редукции, дробная часть
 	float ReductionRatioStepperMotor;	//Коэффициегт редукции
 	UINT Freq;	//Частота управляющего сигнала
 	float Period;	//Период
@@ -102,6 +99,13 @@ typedef struct
 
 typedef struct
 {
+	BOOL fSendReqParam;
+	BOOL fRecv;
+	BOOL fSend;
+
+	BOOL FlagNoLimitStepMotor;
+	BOOL FlagZeroPosition;
+
 	ControlMotor_DType M1;
 	ControlMotor_DType M2;
 }ControlOption_DType;
@@ -123,6 +127,12 @@ struct UserParameters_DType
 	INT HealPoint;
 	clock_t timeDemage;
 	BOOL fSendTurrenParam;
+
+	UINT PositionM1;
+	UINT PositionM2;
+	UINT NeedPositionM1;
+	UINT NeedPositionM2;
+
 	VideoOption_DType VideoOption;
 	ControlOption_DType ControlOption;
 	DamageOption_DType DamageOption;

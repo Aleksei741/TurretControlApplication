@@ -45,7 +45,7 @@ CHAR flagSetParamFGUI = 1;
 //******************************************************************************
 LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInst, HICON Icon, LPCWSTR Name, WNDPROC Procedure);
-LRESULT CALLBACK WideoWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
+LRESULT CALLBACK VideoWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 void SetGUICheckBoxConectionControl(BOOL status);
 void WriteParametersFGUI(void);
 void StopMouseCtrl(void);
@@ -154,7 +154,7 @@ HWND MainWindCreateWideoArea(HWND hWnd)
 
 	hwndWideo = CreateWindowEx(WS_EX_DLGMODALFRAME, WC_TABCONTROL, L"", WS_CHILD | WS_VISIBLE, 200, 5, rcClient.right-205, rcClient.bottom - 10, hWnd, NULL, g_hInst, NULL);
 
-	SetWindowLongPtr(hwndWideo, GWLP_WNDPROC, (LONG_PTR)WideoWndProc);
+	SetWindowLongPtr(hwndWideo, GWLP_WNDPROC, (LONG_PTR)VideoWndProc);
 
 	return hwndWideo;
 }
@@ -299,7 +299,8 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		}
 		break;
 	case WM_CREATE:	//вызывается при создании окна
-		param.CotrolSource = KEYBOARD;
+		memset(&param, 0, sizeof(param));
+		param.CotrolSource = KEYBOARD;		
 
 		MainWindAddMenus(hWnd);
 		MainWindAddWidgets(hWnd);
@@ -352,7 +353,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 	return DefWindowProc(hWnd, msg, wp, lp);
 }
 //------------------------------------------------------------------------------
-LRESULT CALLBACK WideoWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK VideoWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
 	WCHAR szIP[30];
 	HDC hDC;
