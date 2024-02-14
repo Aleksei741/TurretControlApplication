@@ -212,9 +212,11 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 				break;
 			case CheckBoxNoLimit:
 				param.ControlOption.FlagNoLimitStepMotor = SendMessage(hWndControlOption[COPT_NO_LIMIT], BM_GETCHECK, 0, 0);
+				param.ControlOption.fSend = TRUE; //Посылаем параметры в турель
 				break;
 			case ButtonOptionZeroPosition:
 				param.ControlOption.FlagZeroPosition = TRUE;
+				param.ControlOption.fSend = TRUE; //Посылаем параметры в турель
 				break;
 			}
 		}

@@ -228,9 +228,9 @@ void SetComandButton(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack
 
 	//Определяем нажатие кнопки 
 	if (fUp)
-		ud = 32000;
-	else if (fDown)
 		ud = -32000;
+	else if (fDown)
+		ud = 32000;
 	else
 		ud = 0;
 
@@ -510,8 +510,9 @@ BOOL TurretParamSet(void)
 		massage.data[2] = 'S';	//Sensor
 		massage.data[3] = 'P';	//Parameters
 		massage.data[4] = 'D';	//Delay
-		massage.data[5] = param.DamageOption.DelaySensor_ms & 0xFF;
-		massage.data[6] = (param.DamageOption.DelaySensor_ms >> 8) & 0xFF;
+		massage.data[5] = 0;	//Write
+		massage.data[6] = param.DamageOption.DelaySensor_ms & 0xFF;
+		massage.data[7] = (param.DamageOption.DelaySensor_ms >> 8) & 0xFF;
 
 		WaitForSingleObject(hMutexSendCommand, 100);
 		QParameters.push(massage);
@@ -595,25 +596,26 @@ void ParseInputData(void)
 		if (CallbackHPStatus) CallbackHPStatus(param.HealPoint, buffTimeDamage);
 		//-----------------------------------------------------------------------------------
 		//Позиция турели
-		param.PositionM1 = ReciveMassage[3] && 0xFF;
-		param.PositionM1 = (ReciveMassage[4] >> 8) && 0xFF;
-		param.PositionM1 = (ReciveMassage[5] >> 16) && 0xFF;
-		param.PositionM1 = (ReciveMassage[6] >> 24) && 0xFF;
+		unsigned char buf = ReciveMassage[3];
+		param.PositionM1 = buf;
+		param.PositionM1 |= (unsigned char)ReciveMassage[4] << 8;
+		param.PositionM1 |= (unsigned char)ReciveMassage[5] << 16;
+		param.PositionM1 |= (unsigned char)ReciveMassage[6] << 24;
 
-		param.PositionM2 = ReciveMassage[7] && 0xFF;
-		param.PositionM2 = (ReciveMassage[8] >> 8) && 0xFF;
-		param.PositionM2 = (ReciveMassage[9] >> 16) && 0xFF;
-		param.PositionM2 = (ReciveMassage[10] >> 24) && 0xFF;
+		param.PositionM2 = (unsigned char)ReciveMassage[7];
+		param.PositionM2 |= ((unsigned char)ReciveMassage[8] << 8);
+		param.PositionM2 |= ((unsigned char)ReciveMassage[9] << 16);
+		param.PositionM2 |= ((unsigned char)ReciveMassage[10] << 24);
 
-		param.NeedPositionM1 = ReciveMassage[11] && 0xFF;
-		param.NeedPositionM1 = (ReciveMassage[12] >> 8) && 0xFF;
-		param.NeedPositionM1 = (ReciveMassage[13] >> 16) && 0xFF;
-		param.NeedPositionM1 = (ReciveMassage[14] >> 24) && 0xFF;
+		param.NeedPositionM1 = (unsigned char)ReciveMassage[11];
+		param.NeedPositionM1 |= ((unsigned char)ReciveMassage[12] << 8);
+		param.NeedPositionM1 |= ((unsigned char)ReciveMassage[13] << 16);
+		param.NeedPositionM1 |= ((unsigned char)ReciveMassage[14] << 24);
 
-		param.NeedPositionM2 = ReciveMassage[15] && 0xFF;
-		param.NeedPositionM2 = (ReciveMassage[16] >> 8) && 0xFF;
-		param.NeedPositionM2 = (ReciveMassage[17] >> 16) && 0xFF;
-		param.NeedPositionM2 = (ReciveMassage[18] >> 24) && 0xFF;
+		param.NeedPositionM2 = (unsigned char)ReciveMassage[15];
+		param.NeedPositionM2 |= ((unsigned char)ReciveMassage[16] << 8);
+		param.NeedPositionM2 |= ((unsigned char)ReciveMassage[17] << 16);
+		param.NeedPositionM2 |= ((unsigned char)ReciveMassage[18] << 24);
 	}
 	//=================================================================================================================
 	//Параметры управления

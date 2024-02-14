@@ -137,10 +137,10 @@ struct UserParameters_DType
 	clock_t timeDemage;
 	BOOL fSendTurrenParam;
 
-	UINT PositionM1;
-	UINT PositionM2;
-	UINT NeedPositionM1;
-	UINT NeedPositionM2;
+	INT PositionM1;
+	INT PositionM2;
+	INT NeedPositionM1;
+	INT NeedPositionM2;
 
 	VideoOption_DType VideoOption;
 	ControlOption_DType ControlOption;
