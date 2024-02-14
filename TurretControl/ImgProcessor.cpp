@@ -201,33 +201,70 @@ void PositionDrawing(HDC hCompatibleDC, UINT Width, UINT Height)
 	float degree_in_step;
 	TCHAR szBuf[128];
 	float degree;
+	float diff;
 
-	h_font = CreateFont(param.AimOption.TextWidthPix, param.AimOption.TextHeightPix, 0, 0,
+	h_font = CreateFont(param.IndicateOption.TextHeightPix, param.IndicateOption.TextWidthPix, 0, 0,
 		FW_NORMAL, 0,
 		0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Arial");
 
-	SetTextColor(hCompatibleDC, param.AimOption.TextColor);
+	SetTextColor(hCompatibleDC, param.IndicateOption.Color);
 	SetBkMode(hCompatibleDC, TRANSPARENT);
 	SelectObject(hCompatibleDC, h_font);
 
-	hPen = CreatePen(PS_SOLID, param.AimOption.LineWidthPix, param.AimOption.TextColor);
+	hPen = CreatePen(PS_SOLID, param.IndicateOption.LineWidthPix, param.IndicateOption.Color);
 	SelectObject(hCompatibleDC, hPen);
-		
-	//Позиционное обозначение
+			
+	//Позиционное обозначение	
 	steps_360 = ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
 	degree_in_step = 360.0 / steps_360;
 	degree = param.PositionM1 * degree_in_step;
+	diff = param.NeedPositionM1 * degree_in_step - degree;
 
-	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f\0", degree);
-	TextOut(hCompatibleDC, Width / 2, Height - 30, szBuf, lstrlen(szBuf));
+	if (diff < 0)
+		StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f° %.1f\0", degree, diff);
+	else
+		StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f° +%.1f\0", degree, diff);
+	TextOut(hCompatibleDC, Width / 2, Height - 20 - param.IndicateOption.TextHeightPix, szBuf, lstrlen(szBuf));
+
+	if (param.NeedPositionM1 < param.PositionM1)
+	{
+		MoveToEx(hCompatibleDC, Width / 2 - 10, Height - 20 - param.IndicateOption.TextHeightPix, NULL);
+		LineTo(hCompatibleDC, Width / 2 - 10 - param.IndicateOption.TextHeightPix, Height - 20 - param.IndicateOption.TextHeightPix / 2);
+		LineTo(hCompatibleDC, Width / 2 - 10, Height - 20);
+	}
+
+	if (param.NeedPositionM1 > param.PositionM1)
+	{
+		MoveToEx(hCompatibleDC, Width / 2 + lstrlen(szBuf) * param.IndicateOption.TextWidthPix + 10, Height - 20 - param.IndicateOption.TextHeightPix, NULL);
+		LineTo(hCompatibleDC, Width / 2 + lstrlen(szBuf) * param.IndicateOption.TextWidthPix + 10 + param.IndicateOption.TextHeightPix, Height - 20 - param.IndicateOption.TextHeightPix / 2);
+		LineTo(hCompatibleDC, Width / 2 + lstrlen(szBuf) * param.IndicateOption.TextWidthPix + 10, Height - 20);
+	}
 
 	steps_360 = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
 	degree_in_step = 360.0 / steps_360;
-	degree = param.PositionM2 * degree_in_step;
+	degree = param.PositionM2 * degree_in_step;	
+	diff = param.NeedPositionM2 * degree_in_step - degree;
 
-	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f\0", degree);
-	TextOut(hCompatibleDC, 10, Height / 2, szBuf, lstrlen(szBuf));
+	if(diff < 0)
+		StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f° %.1f\0", degree, diff);
+	else
+		StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.1f° +%.1f\0", degree, diff);
+	TextOut(hCompatibleDC, 15, Height / 2, szBuf, lstrlen(szBuf));
+
+	if (param.NeedPositionM2 > param.PositionM2)
+	{
+		MoveToEx(hCompatibleDC, 15 + (lstrlen(szBuf) * param.IndicateOption.TextWidthPix)/4, Height / 2 - 5, NULL);
+		LineTo(hCompatibleDC, 15 + (lstrlen(szBuf) * param.IndicateOption.TextWidthPix) / 2, Height / 2 - 5 - (param.IndicateOption.TextWidthPix));
+		LineTo(hCompatibleDC, 15 + 3 * (lstrlen(szBuf) * param.IndicateOption.TextWidthPix) / 4, Height / 2 - 5);
+	}
+
+	if (param.NeedPositionM2 < param.PositionM2)
+	{
+		MoveToEx(hCompatibleDC, 15 + (lstrlen(szBuf) * param.IndicateOption.TextWidthPix) / 4, Height / 2 + 5 + param.IndicateOption.TextHeightPix, NULL);
+		LineTo(hCompatibleDC, 15 + (lstrlen(szBuf) * param.IndicateOption.TextWidthPix) / 2, Height / 2 + 5 + param.IndicateOption.TextHeightPix + (param.IndicateOption.TextWidthPix));
+		LineTo(hCompatibleDC, 15 + 3 * (lstrlen(szBuf) * param.IndicateOption.TextWidthPix) / 4, Height / 2 + 5 + param.IndicateOption.TextHeightPix);
+	}
 
 	DeleteObject(h_font);
 	DeleteObject(hPen);

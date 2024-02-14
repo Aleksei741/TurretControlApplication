@@ -31,6 +31,7 @@
 #include "WindowControlOption.h"
 #include "WindowDamageOption.h"
 #include "WindowAimOption.h"
+#include "WindowIndicateOption.h"
 
 // Enable Visual Style
 
@@ -120,6 +121,14 @@ typedef struct
 	TCHAR IP[30];
 }VideoOption_DType;
 
+typedef struct
+{
+	UINT LineWidthPix;
+	UINT TextWidthPix;
+	UINT TextHeightPix;
+	COLORREF Color;
+}IndicateOption_DType;
+
 struct UserParameters_DType
 {
 	UCHAR VideoActive;
@@ -137,6 +146,7 @@ struct UserParameters_DType
 	ControlOption_DType ControlOption;
 	DamageOption_DType DamageOption;
 	AimOption_DType AimOption;
+	IndicateOption_DType IndicateOption;
 };
 //******************************************************************************
 // Секция определения глобальных переменных

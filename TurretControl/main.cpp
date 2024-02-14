@@ -111,6 +111,7 @@ void MainWindAddMenus(HWND hWnd)
 	AppendMenu(SubMenuOption, MF_POPUP, (UINT_PTR)OnMenuActionVideoOption, L"Видео");
 	AppendMenu(SubMenuOption, MF_POPUP, (UINT_PTR)OnMenuActionDamageOption, L"Получение урона");
 	AppendMenu(SubMenuOption, MF_POPUP, (UINT_PTR)OnMenuActionAimOption, L"Прицел");
+	AppendMenu(SubMenuOption, MF_POPUP, (UINT_PTR)OnMenuActionIndicateOption, L"Отображение положения");
 	
 	AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)SubMenu, L"Файл");
 	AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)SubMenuOption, L"Настройка");
@@ -286,6 +287,9 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 			break;			
 		case OnMenuActionAimOption:
 			CreateWindow_AimOption(g_hInst, hwndMainWindow);
+			break;
+		case OnMenuActionIndicateOption:
+			CreateWindow_IndicateOption(g_hInst, hwndMainWindow);
 			break;
 		case OnExitSoftware:
 			PostQuitMessage(0);

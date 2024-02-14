@@ -151,6 +151,7 @@
     <ClInclude Include="WindowAimOption.h" />
     <ClInclude Include="WindowControlOption.h" />
     <ClInclude Include="WindowDamageOption.h" />
+    <ClInclude Include="WindowIndicateOption.h" />
     <ClInclude Include="WindowVideoOption.h" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +165,7 @@
     <ClCompile Include="WindowAimOption.cpp" />
     <ClCompile Include="WindowControlOption.cpp" />
     <ClCompile Include="WindowDamageOption.cpp" />
+    <ClCompile Include="WindowIndicateOption.cpp" />
     <ClCompile Include="WindowVideoOption.cpp" />
   </ItemGroup>
   <ItemGroup>

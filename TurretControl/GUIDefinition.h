@@ -8,7 +8,7 @@ enum {
 	OnMenuActionControlOption,
 	OnMenuActionDamageOption,
 	OnMenuActionAimOption,
-	OnMenuActionOperationScreen,
+	OnMenuActionIndicateOption,
 
 	StartButtonClik,
 	ResetHPButtonClik,
@@ -80,6 +80,11 @@ enum {
 	EditOptionOffsetText3,
 	EditOptionLenLineText3,
 	EditOptionText3,
+
+	EditOptionIndicateLineWidth,
+	EditOptionIndicateTextWidth,
+	EditOptionIndicateTextHeight,
+	ButtonOptionIndicateColor,
 
 	OnExitSoftware,
 };
