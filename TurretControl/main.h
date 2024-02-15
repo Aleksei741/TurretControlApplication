@@ -109,6 +109,8 @@ typedef struct
 
 	ControlMotor_DType M1;
 	ControlMotor_DType M2;
+
+	float MouseCoefficient;
 }ControlOption_DType;
 
 typedef struct

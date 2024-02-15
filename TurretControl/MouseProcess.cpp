@@ -1,6 +1,7 @@
 //******************************************************************************
 // Include
 //******************************************************************************
+#include "main.h"
 #include "MouseProcess.h"
 #include <stdlib.h>
 //******************************************************************************
@@ -9,7 +10,7 @@
 //------------------------------------------------------------------------------
 // Global
 //------------------------------------------------------------------------------
-
+extern UserParameters_DType param;
 //------------------------------------------------------------------------------
 // Local
 //------------------------------------------------------------------------------
@@ -127,8 +128,8 @@ DWORD WINAPI MouseProcedure(CONST LPVOID lpParam)
         if(!FlagMouseProcActive)
             SuspendThread(hTreadMouseProc);
 
-        IncrementedCursor_x = IncrementedCursor_x + (MouseStatus_fromDrv.xPosition - CursorZeroPosition.x);
-        IncrementedCursor_y = IncrementedCursor_y + (MouseStatus_fromDrv.yPosition - CursorZeroPosition.y);
+        IncrementedCursor_x = IncrementedCursor_x + (MouseStatus_fromDrv.xPosition - CursorZeroPosition.x) * param.ControlOption.MouseCoefficient;
+        IncrementedCursor_y = IncrementedCursor_y + (MouseStatus_fromDrv.yPosition - CursorZeroPosition.y) * param.ControlOption.MouseCoefficient;
 
         SetCursorPos(CursorZeroPosition.x, CursorZeroPosition.y);
         MouseStatus_fromDrv.xPosition = CursorZeroPosition.x;

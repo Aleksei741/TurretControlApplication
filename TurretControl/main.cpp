@@ -63,7 +63,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	if (!RegisterClass(&SoftwareMainClass)) { return -1; }
 	MSG SoftwareMainMessege = { 0 };
 
-	hwndMainWindow = CreateWindow(L"KAMSoftware", L"Turret control", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 100, 100, 600, 380, NULL, NULL, NULL, NULL);
+	hwndMainWindow = CreateWindow(L"KAMSoftware", L"Turret control", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 100, 100, 1000, 600, NULL, NULL, NULL, NULL);
 
 	//WSAStartup
 	WSAData wsaData;

@@ -552,7 +552,7 @@ void ParseInputData(void)
 		if (ReciveMassage[19])
 		{
 			Damage.time = clock();
-			Damage.val = ReciveMassage[3];
+			Damage.val = ReciveMassage[19];
 
 			LDamage.push_front(Damage);
 		}

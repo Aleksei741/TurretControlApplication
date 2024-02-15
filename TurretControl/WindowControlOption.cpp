@@ -23,6 +23,7 @@ static WNDPROC OriginalEditM1RotationSpeed;
 static WNDPROC OriginalEditM2RotationSpeed;
 static WNDPROC OriginalEditM1ReductionRatio;
 static WNDPROC OriginalEditM2ReductionRatio;
+static WNDPROC OriginalEditMouseCoefficient;
 //******************************************************************************
 // Секция прототипов локальных функций
 //******************************************************************************
@@ -34,6 +35,7 @@ LRESULT CALLBACK EditM1RotationSpeedWndProc(HWND hWnd, UINT msg, WPARAM wp, LPAR
 LRESULT CALLBACK EditM2RotationSpeedWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 LRESULT CALLBACK EditM1ReductionRatioWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 LRESULT CALLBACK EditM2ReductionRatioWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
+LRESULT CALLBACK MouseCoefficientWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -58,7 +60,7 @@ int WINAPI CreateWindow_ControlOption(HINSTANCE hInst, HWND parent)
 
 	MSG SoftwareMainMessege = { 0 };
 
-	hwndControlOptionWindow = CreateWindow(L"OptionControl", L"Настройки управления", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 650, parent, NULL, hInst, NULL);
+	hwndControlOptionWindow = CreateWindow(L"OptionControl", L"Настройки управления", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 750, parent, NULL, hInst, NULL);
 
 	ShowWindow(hwndControlOptionWindow, SW_NORMAL);
 	UpdateWindow(hwndControlOptionWindow);
@@ -78,6 +80,7 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 	size_t nNumCharConverted;
 	float fractpart = 0;
 	double atofBuf;
+	static SCROLLINFO lpsi = { 0 };
 
 	switch (msg)
 	{
@@ -224,7 +227,7 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 	case WM_CREATE:	//вызывается при создании окна	
 		param.ControlOption.fSendReqParam = TRUE; //Запрос параметров
 
-		CreateWindow(WC_STATIC, L"1 двигатель", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"1 двигатель", WS_VISIBLE | WS_CHILD, 190, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
 
 		CreateWindow(WC_STATIC, L"Предел вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
 		CreateWindow(WC_EDIT, L"180", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1RotationLimit, hInstOption, NULL);
@@ -256,7 +259,9 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1PeriodSignal, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"с", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
-		CreateWindow(WC_STATIC, L"2 двигатель", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
+		cnt++;
+
+		CreateWindow(WC_STATIC, L"2 двигатель", WS_VISIBLE | WS_CHILD, 190, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
 
 		CreateWindow(WC_STATIC, L"Предел вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
 		CreateWindow(WC_EDIT, L"180", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2RotationLimit, hInstOption, NULL);
@@ -288,15 +293,60 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2PeriodSignal, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"с", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
+		cnt++;
 		CreateWindow(WC_STATIC, L"Обнулить координаты положения турели", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
 		hWndControlOption[COPT_ZERO_POSITION] = CreateWindow(WC_BUTTON, L"-", WS_CHILD | WS_VISIBLE, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 22, hWnd, (HMENU)ButtonOptionZeroPosition, hInstOption, NULL);
 
-		hWndControlOption[COPT_NO_LIMIT] = CreateWindow(WC_BUTTON, L"Не ограничивать движение туели", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 22, hWnd, (HMENU)CheckBoxNoLimit, hInstOption, NULL);
+		hWndControlOption[COPT_NO_LIMIT] = CreateWindow(WC_BUTTON, L"Не ограничивать движение туели", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 300, 22, hWnd, (HMENU)CheckBoxNoLimit, hInstOption, NULL);
+
+		cnt++;
+		CreateWindow(WC_EDIT, L"0", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 300, 10 + LINE_SPACE_CONTROL_OPTION * cnt - 20, 60, 20, hWnd, (HMENU)EditMouseCoefficient, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Чувствительность мыши", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
+		hWndControlOption[COPT_MOUSE_COEFFICIENT] = CreateWindow(WC_SCROLLBAR, NULL, WS_CHILD | WS_VISIBLE | SBS_HORZ, 160, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 320, 25, hWnd, (HMENU)ScrollbarMouseCoefficient, hInstOption, NULL);
+		
+		lpsi.nMin = 1;
+		lpsi.nMax = 250;
+		lpsi.cbSize = sizeof(lpsi);
+		lpsi.fMask = SIF_RANGE | SIF_POS;
+		lpsi.nPos = (param.ControlOption.MouseCoefficient * 100);
+
+		SetScrollInfo(hWndControlOption[COPT_MOUSE_COEFFICIENT], SB_CTL, &lpsi, TRUE );
 
 		WriteControlOptionFGUI(hWnd);
 
 		SetTimer(hWnd, COPT_TIMER, 1000, NULL);
 		break;
+	case WM_HSCROLL:
+		switch (LOWORD(wp))
+		{
+		case SB_LINELEFT:
+			if(param.ControlOption.MouseCoefficient > 0.01)
+				param.ControlOption.MouseCoefficient -= 0.01;
+			break;
+		case SB_PAGELEFT:
+			if (param.ControlOption.MouseCoefficient > 0.1)
+				param.ControlOption.MouseCoefficient -= 0.1;
+			break;
+		case SB_LINERIGHT:
+			if (param.ControlOption.MouseCoefficient < 2.50)
+				param.ControlOption.MouseCoefficient += 0.01;
+			break;
+		case SB_PAGERIGHT:
+			if (param.ControlOption.MouseCoefficient < 2.40)
+				param.ControlOption.MouseCoefficient += 0.1;
+			break;
+		case SB_THUMBPOSITION: //Любое перемещение
+		case SB_THUMBTRACK:
+			param.ControlOption.MouseCoefficient = HIWORD(wp) / 100.0;			
+			break;
+		default: break;
+		}		
+		lpsi.nPos = (param.ControlOption.MouseCoefficient * 100);
+		SetScrollInfo(hWndControlOption[COPT_MOUSE_COEFFICIENT], SB_CTL, &lpsi, TRUE);
+		StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.2f\0", param.ControlOption.MouseCoefficient);
+		SetDlgItemText(hWnd, EditMouseCoefficient, szBuf);
+		break;
+
 	case WM_DESTROY:	//взывается при закрытии окна
 		KillTimer(hWnd, COPT_TIMER);
 		UnregisterClass(L"OptionControl", hInstOption);
@@ -358,6 +408,10 @@ void WriteControlOptionFGUI(HWND hWnd)
 		SendMessage(hWndControlOption[COPT_NO_LIMIT], BM_SETCHECK, BST_CHECKED, 0);
 	else
 		SendMessage(hWndControlOption[COPT_NO_LIMIT], BM_SETCHECK, BST_UNCHECKED, 0);
+
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.2f\0", param.ControlOption.MouseCoefficient);
+	SetDlgItemText(hWnd, EditMouseCoefficient, szBuf);
+	//SetScrollPos(hWndControlOption[COPT_MOUSE_COEFFICIENT], SB_CTL, int(param.ControlOption.MouseCoefficient * 100), TRUE);
 
 	WriteControlCalcParamFGUI(hWnd);
 
@@ -513,4 +567,27 @@ LRESULT CALLBACK EditM2ReductionRatioWndProc(HWND hWnd, UINT msg, WPARAM wp, LPA
 		wp = ',';
 
 	return CallWindowProc(OriginalEditM1RotationSpeed, hWnd, msg, wp, lp);
+}
+//------------------------------------------------------------------------------
+LRESULT CALLBACK MouseCoefficientWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+	switch (msg)
+	{
+	case WM_CHAR:
+		if (!((wp >= '0' && wp <= '9')
+			|| wp == '.'
+			|| wp == ','
+			|| wp == VK_RETURN
+			|| wp == VK_DELETE
+			|| wp == VK_BACK))
+		{
+			return NULL;
+		}
+		break;
+	}
+
+	if (wp == '.')
+		wp = ',';
+
+	return CallWindowProc(OriginalEditMouseCoefficient, hWnd, msg, wp, lp);
 }

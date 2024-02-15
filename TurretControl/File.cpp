@@ -221,6 +221,7 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	param.ControlOption.M2.Freq = (UINT)round(param.ControlOption.M2.RotationSpeed / degree_in_step);
 
 	param.ControlOption.M2.NumStepsLimit = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor) * (float)param.ControlOption.M2.RotationLimit / 360.0;
+	param.ControlOption.MouseCoefficient = (float)Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"MouseCoefficient", 100, 0, Path) / 100.0;
 	//-------------------------------------------------------------------------------------------------------------------------
 	//DamageOption
 	param.DamageOption.HealPoint = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"HealPoint", 20, 0, Path);
@@ -351,6 +352,7 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 		szBuf,
 		Path
 	);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"MouseCoefficient", param.ControlOption.MouseCoefficient * 100, 0, Path);
 	//-------------------------------------------------------------------------------------------------------------------------
 	//DamageOption
 	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"HealPoint", param.DamageOption.HealPoint, 0, Path);

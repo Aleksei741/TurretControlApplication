@@ -50,6 +50,8 @@ enum {
 	EditM2FreqSignal,
 	EditM2PeriodSignal,
 	ButtonOptionZeroPosition,
+	EditMouseCoefficient,
+	ScrollbarMouseCoefficient,
 	CheckBoxNoLimit,
 
 	EditOptionHP,
