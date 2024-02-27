@@ -77,13 +77,19 @@ typedef struct
 
 typedef struct
 {
-	INT HealPoint;
+	BOOL fSendReqParam;
+	BOOL fRecv;
+	BOOL fSend;
+
+	UINT DelaySensor_ms;
+
+	UINT DamageDelayMinute;
+	UINT DamageDelaySecond;
+	UINT HealPoint;
+
 	BOOL MovementOff;
 	BOOL WeaponOff;
 	BOOL VideoOff;
-	UINT DamageDelayMinute;
-	UINT DamageDelaySecunde;
-	UINT DelaySensor_ms;
 }DamageOption_DType;
 
 typedef struct
@@ -135,9 +141,8 @@ struct UserParameters_DType
 {
 	UCHAR VideoActive;
 	ControlSource_dType CotrolSource;
-	INT HealPoint;
+	CHAR HealPoint;
 	clock_t timeDemage;
-	BOOL fSendTurrenParam;
 
 	INT PositionM1;
 	INT PositionM2;

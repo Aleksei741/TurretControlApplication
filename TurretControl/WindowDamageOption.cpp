@@ -85,10 +85,11 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 					value = GetDlgItemInt(hWnd, EditOptionHP, NULL, false);
 					if (value < 1)
 						param.DamageOption.HealPoint = 1;
-					else if (value > 1000)
-						param.DamageOption.HealPoint = 1000;
+					else if (value > 120)
+						param.DamageOption.HealPoint = 120;
 					else
 						param.DamageOption.HealPoint = value;
+					param.DamageOption.fSend = TRUE;
 				}
 				break;			
 			case EditOptionDelayDamageMinute:
@@ -99,6 +100,7 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 						param.DamageOption.DamageDelayMinute = 60;
 					else
 						param.DamageOption.DamageDelayMinute = value;
+					param.DamageOption.fSend = TRUE;
 				}
 				break;
 			case EditOptionDelayDamageSecunde:
@@ -106,11 +108,12 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 				{
 					value = GetDlgItemInt(hWnd, EditOptionDelayDamageSecunde, NULL, false);
 					if (value < 1)
-						param.DamageOption.DamageDelaySecunde = 1;
+						param.DamageOption.DamageDelaySecond = 1;
 					else if (value > 60)
-						param.DamageOption.DamageDelaySecunde = 60;
+						param.DamageOption.DamageDelaySecond = 60;
 					else
-						param.DamageOption.DamageDelaySecunde = value;
+						param.DamageOption.DamageDelaySecond = value;
+					param.DamageOption.fSend = TRUE;
 				}
 				break;
 			case EditOptionDelaySensor_ms:
@@ -123,13 +126,14 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 						param.DamageOption.DelaySensor_ms = 10000;
 					else
 						param.DamageOption.DelaySensor_ms = value;
-					param.fSendTurrenParam = TRUE;
+					param.DamageOption.fSend = TRUE;
 				}
 				break;
 			}
 		}
 		break;
 	case WM_CREATE:	//вызываетс€ при создании окна		
+		param.DamageOption.fSendReqParam = TRUE; //«апрос параметров
 
 		CreateWindow(WC_STATIC, L"∆изни турели. 1 жизнь = 1 попадание", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_DAMAGE_OPTION * cnt, 340, 22, hWnd, NULL, hInstOption, NULL);
 		CreateWindow(WC_EDIT, L"40", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_DAMAGE_OPTION * cnt, 60, 22, hWnd, (HMENU)EditOptionHP, hInstOption, NULL);
@@ -150,8 +154,12 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 		CreateWindow(WC_EDIT, L"500", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_DAMAGE_OPTION * cnt, 60, 22, hWnd, (HMENU)EditOptionDelaySensor_ms, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"мс", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_DAMAGE_OPTION * cnt++, 60, 22, hWnd, NULL, hInstOption, NULL);
 		WriteDamageOptionFGUI(hWnd);
+
+		SetTimer(hWnd, DOPT_TIMER, 1000, NULL);
+
 		break;
 	case WM_DESTROY:	//взываетс€ при закрытии окна		
+		KillTimer(hWnd, DOPT_TIMER);
 		UnregisterClass(L"OptionDamage", hInstOption);
 		DestroyWindow(hWnd);
 		return 0;
@@ -159,6 +167,14 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 
 	case WM_NOTIFY:		
 			break;
+
+	case WM_TIMER:
+		if (param.DamageOption.fRecv)
+		{
+			param.DamageOption.fRecv = FALSE;
+			WriteDamageOptionFGUI(hWnd);
+		}
+		break;
 
 	case WM_PAINT:
 		/*hdc = BeginPaint(hWnd, &ps);
@@ -192,7 +208,7 @@ void WriteDamageOptionFGUI(HWND hWnd)
 
 	SetDlgItemInt(hWnd, EditOptionHP, param.DamageOption.HealPoint, false);
 	SetDlgItemInt(hWnd, EditOptionDelayDamageMinute, param.DamageOption.DamageDelayMinute, false);
-	SetDlgItemInt(hWnd, EditOptionDelayDamageSecunde, param.DamageOption.DamageDelaySecunde, false);
+	SetDlgItemInt(hWnd, EditOptionDelayDamageSecunde, param.DamageOption.DamageDelaySecond, false);
 	SetDlgItemInt(hWnd, EditOptionDelaySensor_ms, param.DamageOption.DelaySensor_ms, false);
 
 	flagWriteGUI = FALSE;

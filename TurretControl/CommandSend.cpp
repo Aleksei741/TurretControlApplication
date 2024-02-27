@@ -14,7 +14,7 @@
 //------------------------------------------------------------------------------
 void (*CallbackComandConectionStatus)(BOOL index);
 void (*CallbackVideoStatus)(BOOL index);
-void (*CallbackHPStatus)(INT index, clock_t time);
+void (*CallbackHPStatus)(INT index);
 //------------------------------------------------------------------------------
 // Локальные
 //------------------------------------------------------------------------------
@@ -25,9 +25,6 @@ HANDLE hTreadTicProcedure;
 TransmiteMode_DType TransmiteMode = TX_SOCKET_OFF;
 MotorCommand_DType MotorCommand;
 BOOL statusConetcion;
-
-static std::list<DamageStore_DType> LDamage;
-static BOOL ResetDamage = FALSE;
 
 static std::queue<CommandData_DType> QParameters;
 static char CommandMassage[12] = { 'T', 'C', 0, 0, 0 ,0, 0, 0, 0, 0, 0xA5, 0xA5 };
@@ -42,10 +39,11 @@ DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam);
 DWORD WINAPI TicProcedure(CONST LPVOID lpParam);
 void FillMotionCommand(void);
 void FillParamMassage(void);
-BOOL TurretParamSet(void);
 BOOL SetControlOption(void);
 void ParseInputData(void);
 BOOL RequestControlOption(void);
+BOOL RequestSensorOption(void);
+BOOL SetSensorOption(void);
 //******************************************************************************
 // Секция описания функций
 //******************************************************************************
@@ -72,12 +70,21 @@ void SetIPCommand(LPWSTR strIP)
 //------------------------------------------------------------------------------
 void SendCommandProcessStop(void)
 {
+	CommandData_DType massage;
+
 	TransmiteMode = TX_SOCKET_OFF;
 	
 	if (hMutexSendCommand) CloseHandle(hMutexSendCommand);
 	if (hTreadSendCommandProcedure) CloseHandle(hTreadSendCommandProcedure);
 	if (hTreadTicProcedure) CloseHandle(hTreadTicProcedure);
 	closesocket(SOCKETConnection);
+
+	while (!QParameters.empty())
+	{
+		massage = QParameters.front();
+		QParameters.pop();
+		free(massage.data);
+	}
 }
 //------------------------------------------------------------------------------
 DWORD WINAPI TicProcedure(CONST LPVOID lpParam)
@@ -86,13 +93,6 @@ DWORD WINAPI TicProcedure(CONST LPVOID lpParam)
 	{
 		Sleep(100);
 				
-		//Параметры турели
-		if (param.fSendTurrenParam)
-		{
-			if (TurretParamSet())
-				param.fSendTurrenParam = FALSE;
-		}
-
 		//Заапрос параметров управления турели
 		if (param.ControlOption.fSendReqParam)
 		{
@@ -106,6 +106,20 @@ DWORD WINAPI TicProcedure(CONST LPVOID lpParam)
 			if (SetControlOption())
 				param.ControlOption.fSend = FALSE;
 		}
+		//Заапрос параметров сенсора
+		if (param.DamageOption.fSendReqParam)
+		{
+			if (RequestSensorOption())
+				param.DamageOption.fSendReqParam = FALSE;
+		}
+
+		//Уствноыка параметров сенсора
+		if (param.DamageOption.fSend)
+		{
+			if (SetSensorOption())
+				param.DamageOption.fSend = FALSE;
+		}
+
 
 		//Запускаем передачу при работе с клавиатурой
 		if(param.CotrolSource == KEYBOARD)
@@ -131,8 +145,6 @@ DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam)
 
 		memcpy(chIPBuffer, chIP, sizeof(chIP));
 		ret = connect(SOCKETConnection, (SOCKADDR*)&addr, sizeof(addr));
-
-		param.fSendTurrenParam = TRUE;
 
 		while (ret == 0)
 		{
@@ -160,7 +172,6 @@ DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam)
 				SOCKETConnection = socket(AF_INET, SOCK_STREAM, NULL);
 				connect(SOCKETConnection, (SOCKADDR*)&addr, sizeof(addr));
 				statusConetcion = FALSE;
-				param.fSendTurrenParam = TRUE;
 				memset(ReciveMassage, 0, sizeof(ReciveMassage));
 			}
 			else
@@ -191,7 +202,35 @@ DWORD WINAPI SendCommandProcedure(CONST LPVOID lpParam)
 //------------------------------------------------------------------------------
 BOOL DamageReset(void)
 {
-	ResetDamage = TRUE;
+	CommandData_DType massage;
+	static bool TPResetHP = FALSE;
+
+	if (!statusConetcion)
+		return FALSE;
+
+	//--------------------------------------------------------
+	if (!TPResetHP)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &TPResetHP;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'F';	//Flag
+		massage.data[4] = 'R';	//ResetDamage
+		massage.data[5] = 0;	//Write
+		massage.data[6] = 1;
+		massage.data[7] = 0;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	else
+		return FALSE;
+
 	return TRUE;
 }
 //------------------------------------------------------------------------------
@@ -490,51 +529,11 @@ BOOL SendCommandVideoOFF(void)
 	return TRUE;
 }
 //------------------------------------------------------------------------------
-BOOL TurretParamSet(void)
-{
-	CommandData_DType massage;
-	static bool TPDelaySensor = FALSE;
-
-	if (!statusConetcion)
-		return FALSE;
-
-	//--------------------------------------------------------
-	if (!TPDelaySensor)
-	{
-		massage.size = 12;
-		massage.data = (unsigned char*)malloc(massage.size);
-		memset(massage.data, 0, massage.size);
-		massage.flag = &TPDelaySensor;
-		*massage.flag = TRUE;
-
-		massage.data[2] = 'S';	//Sensor
-		massage.data[3] = 'P';	//Parameters
-		massage.data[4] = 'D';	//Delay
-		massage.data[5] = 0;	//Write
-		massage.data[6] = param.DamageOption.DelaySensor_ms & 0xFF;
-		massage.data[7] = (param.DamageOption.DelaySensor_ms >> 8) & 0xFF;
-
-		WaitForSingleObject(hMutexSendCommand, 100);
-		QParameters.push(massage);
-		ReleaseMutex(hMutexSendCommand);
-	}
-	else
-		return FALSE;
-	//--------------------------------------------------------
-
-	//ResumeThread(hTreadSendCommandProcedure);
-	return TRUE;
-}
-//------------------------------------------------------------------------------
 void ParseInputData(void)
 {
 	unsigned int value;
 	int i;
-	DamageStore_DType Damage;
-	std::list<DamageStore_DType>::iterator itDamage;
 	INT HealPoint;
-	clock_t paramTimeDeamage_ms;
-	clock_t buffTimeDamage;
 
 	if (ReciveMassage[0] != 0x54 && ReciveMassage[1] != 0x43) //Turret Control
 		return;
@@ -547,53 +546,10 @@ void ParseInputData(void)
 		if (CallbackVideoStatus) CallbackVideoStatus(ReciveMassage[21]);
 		//Подсчет HP
 		//-----------------------------------------------------------------------------------
-		paramTimeDeamage_ms = param.DamageOption.DamageDelayMinute * 60 * 1000 + param.DamageOption.DamageDelaySecunde * 1000;
-		//-----------------------------------------------------------------------------------		
-		if (ReciveMassage[19])
-		{
-			Damage.time = clock();
-			Damage.val = ReciveMassage[19];
-
-			LDamage.push_front(Damage);
-		}
-
-		if (ResetDamage)
-		{
-			LDamage.clear();
-			ResetDamage = FALSE;
-		}
-
-		while (!LDamage.empty())
-		{
-			itDamage = LDamage.end();
-			itDamage--;
-			if (itDamage->time + paramTimeDeamage_ms < clock())
-				LDamage.pop_back();
-			else
-				break;
-		}
-
-		HealPoint = param.DamageOption.HealPoint;
-		itDamage = LDamage.begin();
-		for (i = 0; i < LDamage.size(); i++)
-		{
-			HealPoint -= itDamage->val;
-			itDamage++;
-		}
-		param.HealPoint = HealPoint;
+		param.HealPoint = ReciveMassage[19];
 		//-----------------------------------------------------------------------------------
-		//Вывод HP на дисплей
-		if (LDamage.empty())
-		{
-			buffTimeDamage = paramTimeDeamage_ms;
-		}
-		else
-		{
-			itDamage = LDamage.end();
-			itDamage--;
-			buffTimeDamage = itDamage->time + paramTimeDeamage_ms - clock();
-		}
-		if (CallbackHPStatus) CallbackHPStatus(param.HealPoint, buffTimeDamage);
+		//Вывод HP на дисплей		
+		if (CallbackHPStatus) CallbackHPStatus(param.HealPoint);
 		//-----------------------------------------------------------------------------------
 		//Позиция турели
 		unsigned char buf = ReciveMassage[3];
@@ -659,6 +615,35 @@ void ParseInputData(void)
 				param.ControlOption.fRecv = TRUE;
 			}
 		}
+	}
+	//=================================================================================================================
+	//Параметры получения урона
+	if (ReciveMassage[2] == 0x53) //Sensor
+	{
+		if (ReciveMassage[3] == 0x50) //Parameters
+		{
+			value = ReciveMassage[5] | (ReciveMassage[6] << 8) | (ReciveMassage[7] << 16) | (ReciveMassage[8] << 24);
+			if (ReciveMassage[4] == 0x44) //DelaySensor
+			{
+				param.DamageOption.DelaySensor_ms = value;
+				param.DamageOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x48) //HP
+			{
+				param.DamageOption.HealPoint = value;
+				param.DamageOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x4D) //Minutes Delay
+			{
+				param.DamageOption.DamageDelayMinute = value;
+				param.DamageOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x53) //Seconds Delay
+			{
+				param.DamageOption.DamageDelaySecond = value;
+				param.DamageOption.fRecv = TRUE;
+			}
+		}	
 	}
 }
 //------------------------------------------------------------------------------
@@ -920,6 +905,200 @@ BOOL SetControlOption(void)
 		massage.data[4] = 'L';	//NoLimitStepMotor
 		massage.data[5] = 0; //Write
 		massage.data[6] = param.ControlOption.FlagNoLimitStepMotor;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+
+	ResumeThread(hTreadSendCommandProcedure);
+	return TRUE;
+}
+//------------------------------------------------------------------------------
+BOOL RequestSensorOption(void)
+{
+	CommandData_DType massage;
+	static bool SDelay = FALSE;
+	static bool SHP = FALSE;
+	static bool SDamageLifetimeMin = FALSE;
+	static bool SDamageLifetimeSec = FALSE;
+
+	if (!statusConetcion)
+		return FALSE;
+
+	//--------------------------------------------------------	
+	if (!SDelay)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SDelay;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'D';	//Delay
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!SHP)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SHP;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'H';	//HP
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!SDamageLifetimeMin)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SDamageLifetimeMin;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'M';	//Minutes
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!SDamageLifetimeSec)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SDamageLifetimeSec;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'S';	//Seconds
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+
+	ResumeThread(hTreadSendCommandProcedure);
+	return TRUE;
+}
+//------------------------------------------------------------------------------
+BOOL SetSensorOption(void)
+{
+	CommandData_DType massage;
+	static bool SDelay = FALSE;
+	static bool SHP = FALSE;
+	static bool SDamageLifetimeMin = FALSE;
+	static bool SDamageLifetimeSec = FALSE;
+
+	if (!statusConetcion)
+		return FALSE;
+
+	//--------------------------------------------------------	
+	if (!SDelay)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SDelay;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'D';	//Delay
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.DamageOption.DelaySensor_ms & 0xFF;
+		massage.data[7] = (param.DamageOption.DelaySensor_ms >> 8) & 0xFF;
+		massage.data[8] = (param.DamageOption.DelaySensor_ms >> 16) & 0xFF;
+		massage.data[9] = (param.DamageOption.DelaySensor_ms >> 24) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!SHP)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SHP;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'H';	//HP
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.DamageOption.HealPoint & 0xFF;
+		massage.data[7] = (param.DamageOption.HealPoint >> 8) & 0xFF;
+		massage.data[8] = (param.DamageOption.HealPoint >> 16) & 0xFF;
+		massage.data[9] = (param.DamageOption.HealPoint >> 24) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!SDamageLifetimeMin)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SDamageLifetimeMin;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'M';	//Minute
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.DamageOption.DamageDelayMinute & 0xFF;
+		massage.data[7] = (param.DamageOption.DamageDelayMinute >> 8) & 0xFF;
+		massage.data[8] = 0;
+		massage.data[9] = 0;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------
+	if (!SDamageLifetimeSec)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &SDamageLifetimeMin;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'S';	//Sensor
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 'M';	//Minute
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.DamageOption.DamageDelaySecond & 0xFF;
+		massage.data[7] = (param.DamageOption.DamageDelaySecond >> 8) & 0xFF;
+		massage.data[8] = 0;
+		massage.data[9] = 0;
 
 		WaitForSingleObject(hMutexSendCommand, 100);
 		QParameters.push(massage);

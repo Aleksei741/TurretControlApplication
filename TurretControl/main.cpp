@@ -134,13 +134,13 @@ void MainWindAddWidgets(HWND hWnd)
 	
 	//hwndHealPointArea = CreateWindowEx(WS_EX_DLGMODALFRAME, WC_TREEVIEW, L"", WS_CHILD | WS_VISIBLE, 5, 85, 140, 140, hWnd, NULL, g_hInst, NULL);
 	//(HBRUSH)COLOR_WINDOW
-	CreateWindow(WC_EDIT, L"Heal Point", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 15, 90, 100, 20, hWnd, (HMENU)NULL, g_hInst, NULL);
-	hwndEditHP = CreateWindow(WC_EDIT, L"20", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 25, 110, 25, 20, hWnd, (HMENU)EditIP, g_hInst, NULL);
-	hwndEditTimer = CreateWindow(WC_EDIT, L"00:00", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 50, 110, 65, 20, hWnd, (HMENU)EditTimer, g_hInst, NULL);
-	hwndButtonResetHP = CreateWindow(WC_BUTTON, L"Reset HP", WS_VISIBLE | WS_CHILD | BS_CENTER | BS_MULTILINE, 15, 130, 100, 20, hWnd, (HMENU)ResetHPButtonClik, g_hInst, NULL);
+	CreateWindow(WC_EDIT, L"Heal Point", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 10, 90, 80, 20, hWnd, (HMENU)NULL, g_hInst, NULL);
+	hwndEditHP = CreateWindow(WC_EDIT, L"20", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 95, 90, 25, 20, hWnd, (HMENU)EditIP, g_hInst, NULL);
+	//hwndEditTimer = CreateWindow(WC_EDIT, L"00:00", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_READONLY, 50, 110, 65, 20, hWnd, (HMENU)EditTimer, g_hInst, NULL);
+	hwndButtonResetHP = CreateWindow(WC_BUTTON, L"Reset HP", WS_VISIBLE | WS_CHILD | BS_CENTER | BS_MULTILINE, 15, 110, 100, 20, hWnd, (HMENU)ResetHPButtonClik, g_hInst, NULL);
 	//SendMessage(hwndButtonResetHP, WM_SETFONT, (WPARAM)h_font, (LPARAM)1);
 
-	hwndButtonMouseControl = CreateWindow(WC_BUTTON, L"Mouse", WS_VISIBLE | WS_CHILD, 15, 160, 100, 20, hWnd, (HMENU)MouseControlButtonClik, g_hInst, NULL);
+	hwndButtonMouseControl = CreateWindow(WC_BUTTON, L"Mouse", WS_VISIBLE | WS_CHILD, 15, 150, 100, 20, hWnd, (HMENU)MouseControlButtonClik, g_hInst, NULL);
 	
 	SendMessage(hwndButtonConnect, BM_SETDONTCLICK, TRUE, NULL);
 	SendMessage(hwndButtonVideo, BM_SETDONTCLICK, TRUE, NULL);
@@ -207,29 +207,12 @@ void SetGUIVideoStatus(BOOL status)
 	}
 }
 //------------------------------------------------------------------------------
-void SetGUIHPStatus(INT status, clock_t time)
+void SetGUIHPStatus(INT status)
 {
 	TCHAR szBuf[10];
 
-	static UINT lastSec = 0;
-	static UINT lastMin = 0;
-	UINT sec;
-	UINT min;
-
 	StringCchPrintf(szBuf, 4 / sizeof(CHAR), L"%d\0", status);
-	SendMessage(hwndEditHP, WM_SETTEXT, 0, (LPARAM)szBuf);
-
-	sec = (UINT)(time / 1000) % 60;
-	min = (UINT)(time / 1000) / 60;
-	if (sec != lastSec || lastMin != min)
-	{
-		lastSec = sec;
-		lastMin = min;
-		StringCchPrintf(szBuf, 10 / sizeof(CHAR), L"%d:%d\0", min, sec);
-		SendMessage(hwndEditTimer, WM_SETTEXT, 0, (LPARAM)szBuf);
-	}
-	 
-	
+	SendMessage(hwndEditHP, WM_SETTEXT, 0, (LPARAM)szBuf);		
 }
 //------------------------------------------------------------------------------
 void StopMouseCtrl(void)
@@ -321,7 +304,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		rtp_H264_recive_init();
 
 		param.HealPoint = param.DamageOption.HealPoint;
-		SetGUIHPStatus(param.HealPoint, param.DamageOption.DamageDelayMinute * 60 * 1000 + param.DamageOption.DamageDelaySecunde * 1000);
+		SetGUIHPStatus(param.HealPoint);
 
 		MouseHookInterruptProcessing = &SetComandMouse;
 		MouseProcess_init();

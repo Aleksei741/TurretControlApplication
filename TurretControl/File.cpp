@@ -229,7 +229,7 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	param.DamageOption.VideoOff = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"VideoOff", 1, 0, Path);
 	param.DamageOption.WeaponOff = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"WeaponOff", 1, 0, Path);
 	param.DamageOption.DamageDelayMinute = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DamageDelayMinute", 2, 0, Path);
-	param.DamageOption.DamageDelaySecunde = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DamageDelaySecunde", 30, 0, Path);
+	param.DamageOption.DamageDelaySecond = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DamageDelaySecond", 30, 0, Path);
 	param.DamageOption.DelaySensor_ms = Read1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DelaySensor_ms", 500, 0, Path);
 	//-------------------------------------------------------------------------------------------------------------------------
 	//AimOption
@@ -360,7 +360,7 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"VideoOff", param.DamageOption.VideoOff, 0, Path);
 	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"WeaponOff", param.DamageOption.WeaponOff, 0, Path);
 	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DamageDelayMinute", param.DamageOption.DamageDelayMinute, 0, Path);
-	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DamageDelaySecunde", param.DamageOption.DamageDelaySecunde, 0, Path);
+	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DamageDelaySecond", param.DamageOption.DamageDelaySecond, 0, Path);
 	Save1Param((LPWSTR)L"DamageOption", (LPWSTR)L"DelaySensor_ms", param.DamageOption.DelaySensor_ms, 0, Path);
 	//-------------------------------------------------------------------------------------------------------------------------
 	//AimOption

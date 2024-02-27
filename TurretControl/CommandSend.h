@@ -56,7 +56,7 @@ void SetComandButton(BOOL fLeft, BOOL fRight, BOOL fUp, BOOL fDown, BOOL fAttack
 void SetComandMouse(INT lr, INT ud, BOOL fAttack);
 extern void (*CallbackComandConectionStatus)(BOOL index);
 extern void (*CallbackVideoStatus)(BOOL status);
-extern void (*CallbackHPStatus)(INT index, clock_t time);
+extern void (*CallbackHPStatus)(INT index);
 BOOL SendCommandVideoON(void);
 BOOL SendCommandVideoOFF(void);
 BOOL DamageReset(void);
