@@ -579,7 +579,7 @@ void ParseInputData(void)
 	{
 		if (ReciveMassage[3] == 0x50) //Parameters
 		{
-			value = ReciveMassage[5] | (ReciveMassage[6] << 8) | (ReciveMassage[7] << 16) | (ReciveMassage[8] << 24);
+			value = (unsigned char)ReciveMassage[5] | ((unsigned char)ReciveMassage[6] << 8) | ((unsigned char)ReciveMassage[7] << 16) | ((unsigned char)ReciveMassage[8] << 24);
 			if (ReciveMassage[4] == 0x01) //MaxSteppersStepMotor1
 			{
 				param.ControlOption.M1.NumStepsLimit = value;
