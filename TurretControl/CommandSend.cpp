@@ -622,7 +622,7 @@ void ParseInputData(void)
 	{
 		if (ReciveMassage[3] == 0x50) //Parameters
 		{
-			value = ReciveMassage[5] | (ReciveMassage[6] << 8) | (ReciveMassage[7] << 16) | (ReciveMassage[8] << 24);
+			value = (unsigned char)ReciveMassage[5] | ((unsigned char)ReciveMassage[6] << 8) | ((unsigned char)ReciveMassage[7] << 16) | ((unsigned char)ReciveMassage[8] << 24);
 			if (ReciveMassage[4] == 0x44) //DelaySensor
 			{
 				param.DamageOption.DelaySensor_ms = value;
@@ -1093,7 +1093,7 @@ BOOL SetSensorOption(void)
 
 		massage.data[2] = 'S';	//Sensor
 		massage.data[3] = 'P';	//Parameters
-		massage.data[4] = 'M';	//Minute
+		massage.data[4] = 'S';	//Second
 		massage.data[5] = 0; //Write
 		massage.data[6] = param.DamageOption.DamageDelaySecond & 0xFF;
 		massage.data[7] = (param.DamageOption.DamageDelaySecond >> 8) & 0xFF;

@@ -107,10 +107,8 @@ LRESULT CALLBACK DamageOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 				if (HIWORD(wp) == EN_UPDATE)
 				{
 					value = GetDlgItemInt(hWnd, EditOptionDelayDamageSecunde, NULL, false);
-					if (value < 1)
-						param.DamageOption.DamageDelaySecond = 1;
-					else if (value > 60)
-						param.DamageOption.DamageDelaySecond = 60;
+					if (value > 59)
+						param.DamageOption.DamageDelaySecond = 59;
 					else
 						param.DamageOption.DamageDelaySecond = value;
 					param.DamageOption.fSend = TRUE;
