@@ -69,6 +69,7 @@ AVFrame* pAVFrame;
 AVFrame* AVFrameRGG;
 SwsContext* pSwsContext;
 AVPacket *pAVPacket;
+AVDictionary *dict = NULL;
 AVCodecParserContext* pAVCodecParserContext;
 //******************************************************************************
 // Section of prototypes of local functions
@@ -142,6 +143,9 @@ DWORD WINAPI rtp_H264_recive_Procedure(CONST LPVOID lpParam)
 DWORD WINAPI rtp_decode_Procedure(CONST LPVOID lpParam)
 {
     RTPData_DType packet;
+    uint8_t* packed_metadata;
+    size_t metadata_len;
+
     pAVPacket = av_packet_alloc();
     if (!pAVPacket)
     {
@@ -165,6 +169,11 @@ DWORD WINAPI rtp_decode_Procedure(CONST LPVOID lpParam)
         exit(1);
     }
 
+    av_dict_set(&dict, "tune", "zerolatency", 0);
+    av_dict_set(&dict, "preset", "ultrafast", 0);
+    //packed_metadata = av_packet_pack_dictionary(dict, &metadata_len);
+    //av_packet_add_side_data(pAVPacket, AV_PKT_DATA_STRINGS_METADATA, packed_metadata, metadata_len);
+
     pAVCodecContext = avcodec_alloc_context3(pAVCodec);
     if (!pAVCodecContext) 
     {
@@ -172,7 +181,7 @@ DWORD WINAPI rtp_decode_Procedure(CONST LPVOID lpParam)
         exit(1);
     }
                
-    if (avcodec_open2(pAVCodecContext, pAVCodec, NULL) < 0)
+    if (avcodec_open2(pAVCodecContext, pAVCodec, &dict) < 0)
     {
         MessageBox(NULL, L"ERROR Could not open codec", L"Init decoder error", MB_OK | MB_ICONERROR);
         exit(1);
@@ -206,6 +215,8 @@ DWORD WINAPI rtp_decode_Procedure(CONST LPVOID lpParam)
         Decode_NaluToAVFrameRGG();
     }
 
+    //av_freep(&packed_metadata);
+    av_dict_free(&dict);
     avformat_free_context(pAVFormatContext);
     av_frame_free(&pAVFrame);
     avcodec_close(pAVCodecContext);
@@ -497,7 +508,7 @@ void Decode_NaluToAVFrameRGG()
     unsigned char* data = NULL;
     int ret;
     RTPData_DType NALU;
-
+    
     av_frame_unref(pAVFrame);
     av_packet_unref(pAVPacket);
 
@@ -517,7 +528,7 @@ void Decode_NaluToAVFrameRGG()
         size = NALU.size;
 
         while(size)
-        {            
+        {                        
             len = av_parser_parse2(pAVCodecParserContext, pAVCodecContext, &pAVPacket->data, &pAVPacket->size,
                 (uint8_t*)data, size,
                 AV_NOPTS_VALUE, AV_NOPTS_VALUE, AV_NOPTS_VALUE);
@@ -565,6 +576,7 @@ void Decode_NaluToAVFrameRGG()
         }
         free(NALU.data);
         NALU.size = 0;
-    }    
+    }   
+    
 }
 
