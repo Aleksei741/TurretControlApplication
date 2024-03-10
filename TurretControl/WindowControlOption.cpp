@@ -90,18 +90,30 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 			switch (LOWORD(wp))
 			{
 			//M1
-			case EditM1RotationLimit:
+			case EditM1MaxDegreePosition:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM1RotationLimit, NULL, false);
-					if (value >= 360)
-						param.ControlOption.M1.RotationLimit = 359;
+					value = GetDlgItemInt(hWnd, EditM1MaxDegreePosition, NULL, false);
+					if (value >= 180)
+						param.ControlOption.M1.MaxDegreePosition = 180;
 					else
-						param.ControlOption.M1.RotationLimit = value;
+						param.ControlOption.M1.MaxDegreePosition = value;
 
 					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;			
+			case EditM1MinDegreePosition:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					value = GetDlgItemInt(hWnd, EditM1MinDegreePosition, NULL, false);
+					if (value >= 180)
+						param.ControlOption.M1.MinDegreePosition = 180;
+					else
+						param.ControlOption.M1.MinDegreePosition = value;
+
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
 			case EditM1RotationSpeed:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
@@ -109,19 +121,6 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 					wcstombs_s(&nNumCharConverted, chBuf, sizeof(chBuf) / sizeof(chBuf[0]), szBuf, sizeof(szBuf) / sizeof(szBuf[0]));
 					atofBuf = atof(chBuf);
 					param.ControlOption.M1.RotationSpeed = (float)atofBuf;
-					WriteControlCalcParamFGUI(hWnd);
-				}
-				break;
-			case EditM1StepsStepperMotor:
-				if (HIWORD(wp) == EN_UPDATE)
-				{
-					value = GetDlgItemInt(hWnd, EditM1StepsStepperMotor, NULL, false);
-					if (value < 1)
-						param.ControlOption.M1.StepsStepperMotor = 1;
-					else if (value > 1000)
-						param.ControlOption.M1.StepsStepperMotor = 10000;
-					else
-						param.ControlOption.M1.StepsStepperMotor = value;
 					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
@@ -152,14 +151,26 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 				}
 				break;
 			//M2
-			case EditM2RotationLimit:
+			case EditM2MaxDegreePosition:
 				if (HIWORD(wp) == EN_UPDATE)
 				{
-					value = GetDlgItemInt(hWnd, EditM2RotationLimit, NULL, false);
-					if (value >= 360)
-						param.ControlOption.M2.RotationLimit = 359;
+					value = GetDlgItemInt(hWnd, EditM2MaxDegreePosition, NULL, false);
+					if (value >= 180)
+						param.ControlOption.M2.MaxDegreePosition = 180;
 					else
-						param.ControlOption.M2.RotationLimit = value;
+						param.ControlOption.M2.MaxDegreePosition = value;
+
+					WriteControlCalcParamFGUI(hWnd);
+				}
+				break;
+			case EditM2MinDegreePosition:
+				if (HIWORD(wp) == EN_UPDATE)
+				{
+					value = GetDlgItemInt(hWnd, EditM2MinDegreePosition, NULL, false);
+					if (value >= 180)
+						param.ControlOption.M2.MinDegreePosition = 180;
+					else
+						param.ControlOption.M2.MinDegreePosition = value;
 
 					WriteControlCalcParamFGUI(hWnd);
 				}
@@ -171,19 +182,6 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 					wcstombs_s(&nNumCharConverted, chBuf, sizeof(chBuf) / sizeof(chBuf[0]), szBuf, sizeof(szBuf) / sizeof(szBuf[0]));
 					atofBuf = atof(chBuf);
 					param.ControlOption.M2.RotationSpeed = (float)atofBuf;
-					WriteControlCalcParamFGUI(hWnd);
-				}
-				break;
-			case EditM2StepsStepperMotor:
-				if (HIWORD(wp) == EN_UPDATE)
-				{
-					value = GetDlgItemInt(hWnd, EditM2StepsStepperMotor, NULL, false);
-					if (value < 1)
-						param.ControlOption.M2.StepsStepperMotor = 1;
-					else if (value > 1000)
-						param.ControlOption.M2.StepsStepperMotor = 10000;
-					else
-						param.ControlOption.M2.StepsStepperMotor = value;
 					WriteControlCalcParamFGUI(hWnd);
 				}
 				break;
@@ -229,8 +227,12 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 
 		CreateWindow(WC_STATIC, L"1 двигатель", WS_VISIBLE | WS_CHILD, 190, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
 
-		CreateWindow(WC_STATIC, L"Предел вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"180", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1RotationLimit, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Предел вращения вправо", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"90", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1MaxDegreePosition, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"град", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Предел вращения влево", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"90", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1MinDegreePosition, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"град", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
 		CreateWindow(WC_STATIC, L"Скорость вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 200, 25, hWnd, NULL, hInstOption, NULL);
@@ -238,11 +240,7 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 		CreateWindow(WC_STATIC, L"град/сек", WS_VISIBLE | WS_CHILD, 416, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 		OriginalEditM1RotationSpeed = (WNDPROC) SetWindowLongPtr(hWndControlOption[COPT_EDIT_M1_ROTATION_SPEED], GWLP_WNDPROC, (LONG_PTR)EditM1RotationSpeedWndProc);
 
-		CreateWindow(WC_STATIC, L"Количество шагов двигателя на оборот", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"20", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1StepsStepperMotor, hInstOption, NULL);
-		CreateWindow(WC_STATIC, L"шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
-
-		CreateWindow(WC_STATIC, L"Микрошагов на один шаг двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Микрошагов на один оборот двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
 		CreateWindow(WC_EDIT, L"64", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM1MicroStepsStepperMotor, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"мик.шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
@@ -263,8 +261,12 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 
 		CreateWindow(WC_STATIC, L"2 двигатель", WS_VISIBLE | WS_CHILD, 190, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 150, 40, hWnd, NULL, hInstOption, NULL);
 
-		CreateWindow(WC_STATIC, L"Предел вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"180", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2RotationLimit, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Предел вращения вверх", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"90", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2MaxDegreePosition, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"град", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
+
+		CreateWindow(WC_STATIC, L"Предел вращения вниз", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 300, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_EDIT, L"90", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2MinDegreePosition, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"град", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
 		CreateWindow(WC_STATIC, L"Скорость вращения", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 200, 25, hWnd, NULL, hInstOption, NULL);
@@ -272,11 +274,7 @@ LRESULT CALLBACK ControlOptionWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
 		CreateWindow(WC_STATIC, L"град/сек", WS_VISIBLE | WS_CHILD, 416, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 		OriginalEditM2RotationSpeed = (WNDPROC)SetWindowLongPtr(hWndControlOption[COPT_EDIT_M2_ROTATION_SPEED], GWLP_WNDPROC, (LONG_PTR)EditM2RotationSpeedWndProc);
 
-		CreateWindow(WC_STATIC, L"Количество шагов двигателя на оборот", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 250, 40, hWnd, NULL, hInstOption, NULL);
-		CreateWindow(WC_EDIT, L"20", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2StepsStepperMotor, hInstOption, NULL);
-		CreateWindow(WC_STATIC, L"шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
-
-		CreateWindow(WC_STATIC, L"Микрошагов на один шаг двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
+		CreateWindow(WC_STATIC, L"Микрошагов на один оборот двигателя", WS_VISIBLE | WS_CHILD, 10, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 150, 40, hWnd, NULL, hInstOption, NULL);
 		CreateWindow(WC_EDIT, L"64", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 350, 10 + LINE_SPACE_CONTROL_OPTION * cnt, 60, 25, hWnd, (HMENU)EditM2MicroStepsStepperMotor, hInstOption, NULL);
 		CreateWindow(WC_STATIC, L"мик.шаг.", WS_VISIBLE | WS_CHILD, 412, 10 + LINE_SPACE_CONTROL_OPTION * cnt++, 60, 40, hWnd, NULL, hInstOption, NULL);
 
@@ -388,18 +386,18 @@ void WriteControlOptionFGUI(HWND hWnd)
 	}
 
 	flagWriteGUI = TRUE;
-	SetDlgItemInt(hWnd, EditM1RotationLimit, param.ControlOption.M1.RotationLimit, false);
+	SetDlgItemInt(hWnd, EditM1MaxDegreePosition, param.ControlOption.M1.MaxDegreePosition, false);
+	SetDlgItemInt(hWnd, EditM1MinDegreePosition, param.ControlOption.M1.MinDegreePosition, false);
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.RotationSpeed);
 	SetDlgItemText(hWnd, EditM1RotationSpeed, szBuf);
-	SetDlgItemInt(hWnd, EditM1StepsStepperMotor, param.ControlOption.M1.StepsStepperMotor, false);
 	SetDlgItemInt(hWnd, EditM1MicroStepsStepperMotor, param.ControlOption.M1.MicroStepsStepperMotor, false);	
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.ReductionRatioStepperMotor);
 	SetDlgItemText(hWnd, EditM1ReductionRatioStepperMotor, szBuf);
 
-	SetDlgItemInt(hWnd, EditM2RotationLimit, param.ControlOption.M2.RotationLimit, false);
+	SetDlgItemInt(hWnd, EditM2MaxDegreePosition, param.ControlOption.M2.MaxDegreePosition, false);
+	SetDlgItemInt(hWnd, EditM2MinDegreePosition, param.ControlOption.M2.MinDegreePosition, false);
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.RotationSpeed);
 	SetDlgItemText(hWnd, EditM2RotationSpeed, szBuf);
-	SetDlgItemInt(hWnd, EditM2StepsStepperMotor, param.ControlOption.M2.StepsStepperMotor, false);
 	SetDlgItemInt(hWnd, EditM2MicroStepsStepperMotor, param.ControlOption.M2.MicroStepsStepperMotor, false);
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.ReductionRatioStepperMotor);
 	SetDlgItemText(hWnd, EditM2ReductionRatioStepperMotor, szBuf);
@@ -421,7 +419,7 @@ void WriteControlOptionFGUI(HWND hWnd)
 void WriteControlCalcParamFGUI(HWND hWnd)
 {
 	TCHAR szBuf[128];
-	float steps_360 = ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+	float steps_360 = ((float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
 	float degree_in_step = 360.0 / steps_360;
 
 	param.ControlOption.M1.Freq = (UINT)round(param.ControlOption.M1.RotationSpeed / degree_in_step);
@@ -431,13 +429,15 @@ void WriteControlCalcParamFGUI(HWND hWnd)
 		param.ControlOption.M1.Period = 0.001;
 		param.ControlOption.M1.Freq = 1000;
 	}
-	param.ControlOption.M1.NumStepsLimit = steps_360 * (float)param.ControlOption.M1.RotationLimit / 360.0;
-	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.Period);
+	param.ControlOption.M1.MaxStepsPosition = steps_360 * (float)param.ControlOption.M1.MaxDegreePosition / 360.0;
+	param.ControlOption.M1.MinStepsPosition = steps_360 * (float)param.ControlOption.M1.MinDegreePosition / 360.0;
 
 	SetDlgItemInt(hWnd, EditM1FreqSignal, param.ControlOption.M1.Freq, false);
+	
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.Period);	
 	SetDlgItemText(hWnd, EditM1PeriodSignal, szBuf);
 
-	steps_360 = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+	steps_360 = ((float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
 	degree_in_step = 360.0 / steps_360;
 
 	param.ControlOption.M2.Freq = (UINT)round(param.ControlOption.M2.RotationSpeed / degree_in_step);
@@ -447,10 +447,12 @@ void WriteControlCalcParamFGUI(HWND hWnd)
 		param.ControlOption.M2.Period = 0.001;
 		param.ControlOption.M2.Freq = 1000;
 	}
-	param.ControlOption.M2.NumStepsLimit = steps_360 * (float)param.ControlOption.M2.RotationLimit / 360.0;
-	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.Period);
-
+	param.ControlOption.M2.MaxStepsPosition = steps_360 * (float)param.ControlOption.M2.MaxDegreePosition / 360.0;
+	param.ControlOption.M2.MinStepsPosition = steps_360 * (float)param.ControlOption.M2.MinDegreePosition / 360.0;
+	
 	SetDlgItemInt(hWnd, EditM2FreqSignal, param.ControlOption.M2.Freq, false);
+
+	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.Period);
 	SetDlgItemText(hWnd, EditM2PeriodSignal, szBuf);
 
 	param.ControlOption.fSend = TRUE; //Посылаем параметры в турель
@@ -460,19 +462,21 @@ void ReverseCalcParamFGUI(void)
 {
 	TCHAR szBuf[128];
 	float fractpart;
-	float steps_360 = ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+	float steps_360 = ((float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
 	float degree_in_step = 360.0 / steps_360;
 
 	param.ControlOption.M1.RotationSpeed = param.ControlOption.M1.Freq * degree_in_step;
 	param.ControlOption.M1.Period = 1.0 / (float)param.ControlOption.M1.Freq;
-	param.ControlOption.M1.RotationLimit = param.ControlOption.M1.NumStepsLimit * 360.0 / steps_360;
+	param.ControlOption.M1.MaxDegreePosition = param.ControlOption.M1.MaxStepsPosition * 360.0 / steps_360;
+	param.ControlOption.M1.MinDegreePosition = param.ControlOption.M1.MinStepsPosition * 360.0 / steps_360;
 	
-	steps_360 = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+	steps_360 = ((float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
 	degree_in_step = 360.0 / steps_360;
 
 	param.ControlOption.M2.RotationSpeed = param.ControlOption.M2.Freq * degree_in_step;
 	param.ControlOption.M2.Period = 1.0 / (float)param.ControlOption.M2.Freq;
-	param.ControlOption.M2.RotationLimit = param.ControlOption.M2.NumStepsLimit * 360.0 / steps_360;
+	param.ControlOption.M2.MaxDegreePosition = param.ControlOption.M2.MaxStepsPosition * 360.0 / steps_360;
+	param.ControlOption.M2.MinDegreePosition = param.ControlOption.M2.MinStepsPosition * 360.0 / steps_360;
 }
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

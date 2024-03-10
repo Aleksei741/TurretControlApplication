@@ -582,12 +582,32 @@ void ParseInputData(void)
 			value = (unsigned char)ReciveMassage[5] | ((unsigned char)ReciveMassage[6] << 8) | ((unsigned char)ReciveMassage[7] << 16) | ((unsigned char)ReciveMassage[8] << 24);
 			if (ReciveMassage[4] == 0x01) //MaxSteppersStepMotor1
 			{
-				param.ControlOption.M1.NumStepsLimit = value;
+				param.ControlOption.M1.MaxStepsPosition = value;
 				param.ControlOption.fRecv = TRUE;
 			}
 			else if (ReciveMassage[4] == 0x02) //MaxSteppersStepMotor2
 			{
-				param.ControlOption.M2.NumStepsLimit = value;
+				param.ControlOption.M2.MaxStepsPosition = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x03) //MinSteppersStepMotor1
+			{
+				param.ControlOption.M1.MinStepsPosition = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x04) //MinSteppersStepMotor2
+			{
+				param.ControlOption.M2.MinStepsPosition = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			if (ReciveMassage[4] == 0x03) //MinSteppersStepMotor1
+			{
+				param.ControlOption.M1.MinStepsPosition = value;
+				param.ControlOption.fRecv = TRUE;
+			}
+			else if (ReciveMassage[4] == 0x04) //MinSteppersStepMotor2
+			{
+				param.ControlOption.M2.MinStepsPosition = value;
 				param.ControlOption.fRecv = TRUE;
 			}
 			else if (ReciveMassage[4] == 0x11) //FreqMotor1
@@ -652,6 +672,8 @@ BOOL RequestControlOption(void)
 	CommandData_DType massage;
 	static bool VMaxSteppersStepM1 = FALSE;
 	static bool VMaxSteppersStepM2 = FALSE;
+	static bool VMinSteppersStepM1 = FALSE;
+	static bool VMinSteppersStepM2 = FALSE;
 	static bool VFreqM1 = FALSE;
 	static bool VFreqM2 = FALSE;
 	static bool VFlagNoLimit = FALSE;
@@ -690,6 +712,42 @@ BOOL RequestControlOption(void)
 		massage.data[2] = 'M';	//Movement
 		massage.data[3] = 'P';	//Parameters
 		massage.data[4] = 0x02;	//Max steppers step motor2
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VMinSteppersStepM1)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMinSteppersStepM1;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x03;	//Max steppers step motor1
+		massage.data[5] = 1; //Read
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VMinSteppersStepM2)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMinSteppersStepM2;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x04;	//Max steppers step motor2
 		massage.data[5] = 1; //Read
 
 		WaitForSingleObject(hMutexSendCommand, 100);
@@ -779,6 +837,8 @@ BOOL SetControlOption(void)
 	CommandData_DType massage;
 	static bool VMaxSteppersStepM1 = FALSE;
 	static bool VMaxSteppersStepM2 = FALSE;
+	static bool VMinSteppersStepM1 = FALSE;
+	static bool VMinSteppersStepM2 = FALSE;
 	static bool VFreqM1 = FALSE;
 	static bool VFreqM2 = FALSE;
 	static bool VFlagNoLimit = FALSE;
@@ -800,10 +860,10 @@ BOOL SetControlOption(void)
 		massage.data[3] = 'P';	//Parameters
 		massage.data[4] = 0x01;	//Max steppers step motor1
 		massage.data[5] = 0; //Write
-		massage.data[6] = param.ControlOption.M1.NumStepsLimit & 0xFF;
-		massage.data[7] = (param.ControlOption.M1.NumStepsLimit >> 8) & 0xFF;
-		massage.data[8] = (param.ControlOption.M1.NumStepsLimit >> 16) & 0xFF;
-		massage.data[9] = (param.ControlOption.M1.NumStepsLimit >> 24) & 0xFF;
+		massage.data[6] = param.ControlOption.M1.MaxStepsPosition & 0xFF;
+		massage.data[7] = (param.ControlOption.M1.MaxStepsPosition >> 8) & 0xFF;
+		massage.data[8] = (param.ControlOption.M1.MaxStepsPosition >> 16) & 0xFF;
+		massage.data[9] = (param.ControlOption.M1.MaxStepsPosition >> 24) & 0xFF;
 
 		WaitForSingleObject(hMutexSendCommand, 100);
 		QParameters.push(massage);
@@ -822,10 +882,54 @@ BOOL SetControlOption(void)
 		massage.data[3] = 'P';	//Parameters
 		massage.data[4] = 0x02;	//Max steppers step motor2
 		massage.data[5] = 0; //Write
-		massage.data[6] = param.ControlOption.M2.NumStepsLimit & 0xFF;
-		massage.data[7] = (param.ControlOption.M2.NumStepsLimit >> 8) & 0xFF;
-		massage.data[8] = (param.ControlOption.M2.NumStepsLimit >> 16) & 0xFF;
-		massage.data[9] = (param.ControlOption.M2.NumStepsLimit >> 24) & 0xFF;
+		massage.data[6] = param.ControlOption.M2.MaxStepsPosition & 0xFF;
+		massage.data[7] = (param.ControlOption.M2.MaxStepsPosition >> 8) & 0xFF;
+		massage.data[8] = (param.ControlOption.M2.MaxStepsPosition >> 16) & 0xFF;
+		massage.data[9] = (param.ControlOption.M2.MaxStepsPosition >> 24) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VMinSteppersStepM1)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMinSteppersStepM1;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x03;	//Min steppers step motor1
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.M1.MinStepsPosition & 0xFF;
+		massage.data[7] = (param.ControlOption.M1.MinStepsPosition >> 8) & 0xFF;
+		massage.data[8] = (param.ControlOption.M1.MinStepsPosition >> 16) & 0xFF;
+		massage.data[9] = (param.ControlOption.M1.MinStepsPosition >> 24) & 0xFF;
+
+		WaitForSingleObject(hMutexSendCommand, 100);
+		QParameters.push(massage);
+		ReleaseMutex(hMutexSendCommand);
+	}
+	//--------------------------------------------------------	
+	if (!VMinSteppersStepM2)
+	{
+		massage.size = 12;
+		massage.data = (unsigned char*)malloc(massage.size);
+		memset(massage.data, 0, massage.size);
+		massage.flag = &VMinSteppersStepM2;
+		*massage.flag = TRUE;
+
+		massage.data[2] = 'M';	//Movement
+		massage.data[3] = 'P';	//Parameters
+		massage.data[4] = 0x04;	//Min steppers step motor2
+		massage.data[5] = 0; //Write
+		massage.data[6] = param.ControlOption.M2.MinStepsPosition & 0xFF;
+		massage.data[7] = (param.ControlOption.M2.MinStepsPosition >> 8) & 0xFF;
+		massage.data[8] = (param.ControlOption.M2.MinStepsPosition >> 16) & 0xFF;
+		massage.data[9] = (param.ControlOption.M2.MinStepsPosition >> 24) & 0xFF;
 
 		WaitForSingleObject(hMutexSendCommand, 100);
 		QParameters.push(massage);

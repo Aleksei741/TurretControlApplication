@@ -218,6 +218,8 @@ void SetGUIHPStatus(INT status)
 void StopMouseCtrl(void)
 {
 	MouseProcess_stop();
+	SendMessage(hwndButtonMouseControl, WM_SETTEXT, 0, (LPARAM)L"Mouse");
+	Button_SetStyle(hwndButtonMouseControl, WS_VISIBLE | WS_CHILD, TRUE);
 	param.CotrolSource = KEYBOARD;
 }
 //------------------------------------------------------------------------------
@@ -237,6 +239,8 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		case MouseControlButtonClik:
 			param.CotrolSource = MOUSE;
 			ESCInterrupt = &StopMouseCtrl;
+			SendMessage(hwndButtonMouseControl, WM_SETTEXT, 0, (LPARAM)L"press ESC");
+			Button_SetStyle(hwndButtonMouseControl, WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, TRUE);
 			MouseProcess_start(hWnd);
 			SetFocus(hWnd);
 			break;

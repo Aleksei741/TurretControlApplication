@@ -94,10 +94,12 @@ typedef struct
 
 typedef struct
 {
-	UINT NumStepsLimit;
-	UINT RotationLimit;	//Ограничение вращения
+	UINT MaxStepsPosition;
+	UINT MinStepsPosition;
+	UINT MaxDegreePosition;	//Ограничение вращения
+	UINT MinDegreePosition;
 	float RotationSpeed;	//Скорость вращения
-	UINT StepsStepperMotor;	//Шагов шагового двигателя
+	//UINT StepsStepperMotor;	//Шагов шагового двигателя
 	UINT MicroStepsStepperMotor;	//Шагов шагового двигателя
 	float ReductionRatioStepperMotor;	//Коэффициегт редукции
 	UINT Freq;	//Частота управляющего сигнала

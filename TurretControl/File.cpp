@@ -153,8 +153,9 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	//-------------------------------------------------------------------------------------------------------------------------
 	//ControlOption
 	//M1
-	param.ControlOption.M1.RotationLimit = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationLimit", 180, 0, Path);	
-	
+	param.ControlOption.M1.MaxDegreePosition = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MaxDegreePosition", 90, 0, Path);	
+	param.ControlOption.M1.MinDegreePosition = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MinDegreePosition", 90, 0, Path);
+
 	retParam = GetPrivateProfileString(
 		L"ControlOption",
 		L"M1_RotationSpeed",
@@ -167,7 +168,6 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	atofBuf = atof(chBuf);
 	param.ControlOption.M1.RotationSpeed = (float)atofBuf;
 
-	param.ControlOption.M1.StepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_StepsStepperMotor", 20, 0, Path);
 	param.ControlOption.M1.MicroStepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MicroStepsStepperMotor", 64, 0, Path);
 	
 	retParam = GetPrivateProfileString(
@@ -182,13 +182,15 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	atofBuf = atof(chBuf);
 	param.ControlOption.M1.ReductionRatioStepperMotor = (float)atofBuf;
 
-	degree_in_step = 360.0 / ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+	degree_in_step = 360.0 / ((float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
 	param.ControlOption.M1.Freq = (UINT)round(param.ControlOption.M1.RotationSpeed / degree_in_step);
 
-	param.ControlOption.M1.NumStepsLimit = ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor) * (float)param.ControlOption.M1.RotationLimit / 360.0;
+	param.ControlOption.M1.MaxStepsPosition = ((float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor) * (float)param.ControlOption.M1.MaxDegreePosition / 360.0;
+	param.ControlOption.M1.MinStepsPosition = ((float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor) * (float)param.ControlOption.M1.MinDegreePosition / 360.0;
 
 	//M2
-	param.ControlOption.M2.RotationLimit = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationLimit", 180, 0, Path);
+	param.ControlOption.M2.MaxDegreePosition = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MaxDegreePosition", 90, 0, Path);
+	param.ControlOption.M2.MinDegreePosition = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MinDegreePosition", 90, 0, Path);
 	
 	retParam = GetPrivateProfileString(
 		L"ControlOption",
@@ -202,7 +204,6 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	atofBuf = atof(chBuf);
 	param.ControlOption.M2.RotationSpeed = (float)atofBuf;
 
-	param.ControlOption.M2.StepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_StepsStepperMotor", 20, 0, Path);
 	param.ControlOption.M2.MicroStepsStepperMotor = Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MicroStepsStepperMotor", 64, 0, Path);
 	
 	retParam = GetPrivateProfileString(
@@ -217,10 +218,12 @@ BOOL LoadParamsFFile(UserParameters_DType& param, LPWSTR Path)
 	atofBuf = atof(chBuf);
 	param.ControlOption.M2.ReductionRatioStepperMotor = (float)atofBuf;
 
-	degree_in_step = 360.0 / ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+	degree_in_step = 360.0 / ((float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
 	param.ControlOption.M2.Freq = (UINT)round(param.ControlOption.M2.RotationSpeed / degree_in_step);
 
-	param.ControlOption.M2.NumStepsLimit = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor) * (float)param.ControlOption.M2.RotationLimit / 360.0;
+	param.ControlOption.M2.MaxStepsPosition = ((float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor) * (float)param.ControlOption.M2.MaxDegreePosition / 360.0;
+	param.ControlOption.M2.MinStepsPosition = ((float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor) * (float)param.ControlOption.M2.MinDegreePosition / 360.0;
+
 	param.ControlOption.MouseCoefficient = (float)Read1Param((LPWSTR)L"ControlOption", (LPWSTR)L"MouseCoefficient", 100, 0, Path) / 100.0;
 	//-------------------------------------------------------------------------------------------------------------------------
 	//DamageOption
@@ -311,8 +314,9 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 	);
 	//-------------------------------------------------------------------------------------------------------------------------
 	//ControlOption
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_RotationLimit", param.ControlOption.M1.RotationLimit, 0, Path);
-	
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MaxDegreePosition", param.ControlOption.M1.MaxDegreePosition, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MinDegreePosition", param.ControlOption.M1.MinDegreePosition, 0, Path);
+
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.RotationSpeed);	
 	ret = WritePrivateProfileString(
 		L"ControlOption",
@@ -321,7 +325,6 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 		Path
 	);
 
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_StepsStepperMotor", param.ControlOption.M1.StepsStepperMotor, 0, Path);
 	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M1_MicroStepsStepperMotor", param.ControlOption.M1.MicroStepsStepperMotor, 0, Path);
 
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M1.ReductionRatioStepperMotor);
@@ -332,8 +335,9 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 		Path
 	);
 
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_RotationLimit", param.ControlOption.M2.RotationLimit, 0, Path);
-	
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MaxDegreePosition", param.ControlOption.M2.MaxDegreePosition, 0, Path);
+	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MinDegreePosition", param.ControlOption.M2.MinDegreePosition, 0, Path);
+
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.RotationSpeed);
 	ret = WritePrivateProfileString(
 		L"ControlOption",
@@ -342,7 +346,6 @@ void SaveParamsFFile(const UserParameters_DType param,const LPWSTR Path)
 		Path
 	);
 
-	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_StepsStepperMotor", param.ControlOption.M2.StepsStepperMotor, 0, Path);
 	Save1Param((LPWSTR)L"ControlOption", (LPWSTR)L"M2_MicroStepsStepperMotor", param.ControlOption.M2.MicroStepsStepperMotor, 0, Path);
 
 	StringCchPrintf(szBuf, sizeof(szBuf) / sizeof(szBuf[0]), L"%.3f\0", param.ControlOption.M2.ReductionRatioStepperMotor);

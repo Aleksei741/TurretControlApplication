@@ -216,7 +216,7 @@ void PositionDrawing(HDC hCompatibleDC, UINT Width, UINT Height)
 	SelectObject(hCompatibleDC, hPen);
 			
 	//Позиционное обозначение	
-	steps_360 = ((float)param.ControlOption.M1.StepsStepperMotor * (float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
+	steps_360 = ((float)param.ControlOption.M1.MicroStepsStepperMotor * param.ControlOption.M1.ReductionRatioStepperMotor);
 	degree_in_step = 360.0 / steps_360;
 	degree = param.PositionM1 * degree_in_step;
 	diff = param.NeedPositionM1 * degree_in_step - degree;
@@ -241,7 +241,7 @@ void PositionDrawing(HDC hCompatibleDC, UINT Width, UINT Height)
 		LineTo(hCompatibleDC, Width / 2 + lstrlen(szBuf) * param.IndicateOption.TextWidthPix + 10, Height - 20);
 	}
 
-	steps_360 = ((float)param.ControlOption.M2.StepsStepperMotor * (float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
+	steps_360 = ((float)param.ControlOption.M2.MicroStepsStepperMotor * param.ControlOption.M2.ReductionRatioStepperMotor);
 	degree_in_step = 360.0 / steps_360;
 	degree = param.PositionM2 * degree_in_step;	
 	diff = param.NeedPositionM2 * degree_in_step - degree;
